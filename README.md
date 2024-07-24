@@ -27,7 +27,6 @@ Projeto da disciplina de Linguagens de Programação I. Um sistema de viagens.
 
 ### Testar:
 - Após ter compilado o projeto(ter usado o comando `make` também), no diretório `build`, vá para o diretório `test` e execute binário.
-```bash
-    cd test
-    ./tests-project
+    ```bash
+    cd test ./tests-project
     ```
