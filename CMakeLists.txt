@@ -13,10 +13,14 @@ add_subdirectory(test)
 
 #Defining a library to use in test directory
 set(Headers
+    src/include/City.hpp
+    src/include/Passenger.hpp
     src/include/Travel.hpp
 )
 set(Sources
-    src/impl/Travel.cpp
+    src/include/City.cpp
+    src/include/Passenger.cpp
+    src/include/Travel.cpp
 )
 add_library(travelSystemLib STATIC ${Sources} ${Headers})
 
