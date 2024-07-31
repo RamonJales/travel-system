@@ -15,5 +15,6 @@ cmake_install.cmake
 # Arquivos de build
 build/
 bin/
+cmake-build-debug/
 
 googletest/
