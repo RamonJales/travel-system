@@ -15,12 +15,17 @@ add_subdirectory(test)
 set(Headers
     src/include/City.hpp
     src/include/Passenger.hpp
-    src/include/Travel.hpp
+    src/include/interface.hpp
+    src/include/Passenger.hpp
+    src/include/Route.hpp
+    src/include/enums/RouteTypeEnum.hpp
 )
 set(Sources
     src/impl/City.cpp
     src/impl/Passenger.cpp
-    src/impl/Travel.cpp
+    src/impl/interface.cpp
+    src/impl/Passenger.cpp
+    src/impl/Route.cpp
 )
 add_library(travelSystemLib STATIC ${Sources} ${Headers})
 
