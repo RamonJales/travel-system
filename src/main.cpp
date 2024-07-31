@@ -39,22 +39,29 @@ int main() {
             case 1:
             {
                 std::cout << "Opção 1" << std::endl;
+                break;
             }
             case 2:
                 {
                     std::cout << "Opção 2" << std::endl;
+                    break;
                 }
             case 3:
                 {
                     std::cout << "Opção 3" << std::endl;
+                    break;
                 }
             case 4:
                 {
                     std::cout << "Opção 4" << std::endl;
+                    break;
                 }
             default:
-                std::cout << "Escolha inválida. Por favor, tente novamente." << std::endl;
+                if(option != 0) {
+                    std::cout << "Escolha inválida. Por favor, tente novamente." << std::endl;
+                }
                 break;
+
         }
         std::cout << "Pressione Enter para continuar...";
         getchar();
