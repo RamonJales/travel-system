@@ -18,9 +18,9 @@ set(Headers
     src/include/Travel.hpp
 )
 set(Sources
-    src/include/City.cpp
-    src/include/Passenger.cpp
-    src/include/Travel.cpp
+    src/impl/City.cpp
+    src/impl/Passenger.cpp
+    src/impl/Travel.cpp
 )
 add_library(travelSystemLib STATIC ${Sources} ${Headers})
 

@@ -1,5 +1,5 @@
-#include "Passenger.hpp"
-#include "City.hpp"
+#include "../include/Passenger.hpp"
+#include "../include/City.hpp"
 
 Passenger::Passenger(std::string name, City* currentLocation) 
     : name(name), currentLocation(currentLocation) {}
