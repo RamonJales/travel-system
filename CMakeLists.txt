@@ -19,6 +19,9 @@ set(Headers
     src/include/Passenger.hpp
     src/include/Route.hpp
     src/include/enums/RouteTypeEnum.hpp
+    src/include/Transport.hpp
+    src/include/Trip.hpp
+    src/include/Controller.hpp
 )
 set(Sources
     src/impl/City.cpp
@@ -26,6 +29,9 @@ set(Sources
     src/impl/interface.cpp
     src/impl/Passenger.cpp
     src/impl/Route.cpp
+    src/impl/Transport.cpp
+    src/impl/Trip.cpp
+    src/impl/Controller.cpp
 )
 add_library(travelSystemLib STATIC ${Sources} ${Headers})
 
