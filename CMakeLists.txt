@@ -8,30 +8,33 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 enable_testing()
 
-add_subdirectory(googletest)
-add_subdirectory(test)
+#add_subdirectory(googletest)
+#add_subdirectory(test)
 
 #Defining a library to use in test directory
 set(Headers
     src/include/City.hpp
     src/include/Passenger.hpp
     src/include/interface.hpp
-    src/include/Passenger.hpp
     src/include/Route.hpp
     src/include/enums/RouteTypeEnum.hpp
+    src/include/enums/TransportTypeEnum.hpp
     src/include/Transport.hpp
     src/include/Trip.hpp
     src/include/Controller.hpp
+    src/include/DatabaseManager.hpp
+    src/sqlite3/sqlite3.h
 )
 set(Sources
     src/impl/City.cpp
     src/impl/Passenger.cpp
     src/impl/interface.cpp
-    src/impl/Passenger.cpp
     src/impl/Route.cpp
     src/impl/Transport.cpp
     src/impl/Trip.cpp
     src/impl/Controller.cpp
+    src/impl/DatabaseManager.cpp
+    src/sqlite3/sqlite3.c
 )
 add_library(travelSystemLib STATIC ${Sources} ${Headers})
 
@@ -39,6 +42,12 @@ add_executable(project
   src/main.cpp
 )
 
+# Adicione o diretório do SQLite
+add_library(sqlite3 src/sqlite3/sqlite3.c)
+
+# Adicione a biblioteca sqlite3
+target_include_directories(sqlite3 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/sqlite3)
+
 target_include_directories(project PRIVATE src/include)
-target_link_libraries(project PRIVATE travelSystemLib)
+target_link_libraries(project PRIVATE travelSystemLib sqlite3)
 

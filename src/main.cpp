@@ -7,6 +7,7 @@
 #include "include/Route.hpp"
 #include "include/Transport.hpp"
 #include "include/Trip.hpp"
+#include "include/DatabaseManager.hpp"
 
 // #include "include/Travel.hpp"
 #include <list>
@@ -70,6 +71,24 @@ int main() {
         std::cout << "Pressione Enter para continuar...";
         getchar();
     } while (option != 0);
+
+
+
+    sqlite3 *db;
+    int exit = 0;
+
+    exit = sqlite3_open("example.db", &db);
+
+    if (exit) {
+        std::cerr << "Erro ao abrir o banco de dados: " << sqlite3_errmsg(db) << std::endl;
+        return -1;
+    } else {
+        std::cout << "Banco de dados aberto com sucesso!" << std::endl;
+    }
+
+    createTables(db);
+
+    sqlite3_close(db);
 
     return 0;
 }
