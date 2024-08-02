@@ -11,11 +11,8 @@ void createTableCities(sqlite3* db) {
     char* errorMessage = nullptr;
 
     // Create the cities table
-    int exit = sqlite3_exec(db, sql_create, nullptr, 0, &errorMessage);
-    if (exit != SQLITE_OK) {
+    if (sqlite3_exec(db, sql_create, nullptr, 0, &errorMessage) != SQLITE_OK) {
         std::cerr << "Erro ao criar a tabela cities: " << errorMessage << std::endl;
         sqlite3_free(errorMessage);
-    } else {
-        std::cout << "Tabela cities criada com sucesso!" << std::endl;
     }
 }
