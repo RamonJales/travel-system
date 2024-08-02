@@ -24,7 +24,7 @@ set(Headers
     src/include/Controller.hpp
     src/include/repositories/repositoryCity.hpp
     src/include/repositories/repositoryTransport.hpp
-    src/sqlite3/sqlite3.h
+    sqlite3/sqlite3.h
 )
 set(Sources
     src/impl/City.cpp
@@ -36,7 +36,7 @@ set(Sources
     src/impl/Controller.cpp
     src/impl/repositories/repositoryCity.cpp
     src/impl/repositories/repositoryTransport.cpp
-    src/sqlite3/sqlite3.c
+    sqlite3/sqlite3.c
 )
 add_library(travelSystemLib STATIC ${Sources} ${Headers})
 
@@ -45,7 +45,7 @@ add_executable(project
 )
 
 # Adicione o diretório do SQLite
-add_library(sqlite3 src/sqlite3/sqlite3.c)
+add_library(sqlite3 sqlite3/sqlite3.c)
 
 # Adicione a biblioteca sqlite3
 target_include_directories(sqlite3 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/sqlite3)
