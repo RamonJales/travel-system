@@ -7,7 +7,9 @@
 #include "include/Route.hpp"
 #include "include/Transport.hpp"
 #include "include/Trip.hpp"
-#include "include/DatabaseManager.hpp"
+
+#include "include/repositories/repositoryCity.hpp"
+#include "include/repositories/repositoryTransport.hpp"
 
 // #include "include/Travel.hpp"
 #include <list>
@@ -61,6 +63,32 @@ int main() {
                     std::cout << "Opção 4" << std::endl;
                     break;
                 }
+            case 5:
+                {
+                    sqlite3 *db;
+                    if (sqlite3_open("example.db", &db)) {
+                        std::cerr << "Erro ao abrir o banco de dados: " << sqlite3_errmsg(db) << std::endl;
+                        return -1;
+                    } else {
+                        std::cout << "Banco de dados aberto com sucesso!" << std::endl;
+                    }
+
+                    createTableCities(db);
+                    createTableTransports(db);
+
+                    sqlite3_close(db);
+                    break;
+                }
+            case 6:
+                {
+                    if (remove("example.db")) {
+                        std::cerr << "Erro ao deletar o banco de dados: arquivo não existe" << std::endl;
+                        return -1;
+                    } else {
+                        std::cout << "Banco de dados deletado com sucesso!" << std::endl;
+                    }
+                    break;
+                }
             default:
                 if(option != 0) {
                     std::cout << "Escolha inválida. Por favor, tente novamente." << std::endl;
@@ -71,24 +99,6 @@ int main() {
         std::cout << "Pressione Enter para continuar...";
         getchar();
     } while (option != 0);
-
-
-
-    sqlite3 *db;
-    int exit = 0;
-
-    exit = sqlite3_open("example.db", &db);
-
-    if (exit) {
-        std::cerr << "Erro ao abrir o banco de dados: " << sqlite3_errmsg(db) << std::endl;
-        return -1;
-    } else {
-        std::cout << "Banco de dados aberto com sucesso!" << std::endl;
-    }
-
-    createTables(db);
-
-    sqlite3_close(db);
 
     return 0;
 }
