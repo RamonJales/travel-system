@@ -8,8 +8,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 enable_testing()
 
-#add_subdirectory(googletest)
-#add_subdirectory(test)
+add_subdirectory(googletest)
+add_subdirectory(test)
 
 #Defining a library to use in test directory
 set(Headers
@@ -22,7 +22,8 @@ set(Headers
     src/include/Transport.hpp
     src/include/Trip.hpp
     src/include/Controller.hpp
-    src/include/DatabaseManager.hpp
+    src/include/repositories/repositoryCity.hpp
+    src/include/repositories/repositoryTransport.hpp
     src/sqlite3/sqlite3.h
 )
 set(Sources
@@ -33,7 +34,8 @@ set(Sources
     src/impl/Transport.cpp
     src/impl/Trip.cpp
     src/impl/Controller.cpp
-    src/impl/DatabaseManager.cpp
+    src/impl/repositories/repositoryCity.cpp
+    src/impl/repositories/repositoryTransport.cpp
     src/sqlite3/sqlite3.c
 )
 add_library(travelSystemLib STATIC ${Sources} ${Headers})
