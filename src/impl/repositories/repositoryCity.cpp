@@ -43,6 +43,31 @@ bool addCityInCities(sqlite3* db, const std::string& cityName) {
     return true;
 }
 
+bool cityExistsInDatabase(sqlite3* db, const std::string& cityName) {
+    std::string sql = "SELECT COUNT(*) FROM Cities WHERE Name = ?;";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar a consulta: " << sqlite3_errmsg(db) << std::endl;
+        return false;
+    }
+
+    if (sqlite3_bind_text(stmt, 1, cityName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+        std::cerr << "Erro ao vincular o nome da cidade: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    bool exists = false;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        exists = sqlite3_column_int(stmt, 0) > 0;
+    }
+
+    sqlite3_finalize(stmt);
+    return exists;
+}
+
+
 bool removeCityInCities(sqlite3* db, int cityId) {
     const char* sql_remove = R"(
         DELETE FROM cities WHERE id = ?;

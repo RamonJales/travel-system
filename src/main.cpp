@@ -31,7 +31,7 @@ int main() {
 
     //iniciar banco de dados e criar as tabelas
     sqlite3 *db;
-    if (sqlite3_open("example.db", &db)) {
+    if (sqlite3_open("travel-system-database.db", &db)) {
         std::cerr << "Erro ao abrir o banco de dados: " << sqlite3_errmsg(db) << std::endl;
         return -1;
     }
@@ -55,13 +55,26 @@ int main() {
 
 
         switch (option) {
-            case 1:
-            {
-                std::cout << "Opção 1" << std::endl;
+           case 1: {
+                std::string cityName;
+                std::cout << "Digite o nome da cidade: ";
+                std::getline(std::cin, cityName);
+
+                if (cityExistsInDatabase(db, cityName)) {
+                    std::cout << "A cidade \"" << cityName << "\" já está cadastrada no banco de dados." << std::endl;
+                } else {
+                    City city(cityName);
+                    //cityDatabase.push_back(city);  
+
+                    if (addCityInCities(db, cityName)) {
+                        std::cout << "Cidade adicionada com sucesso!" << std::endl;
+                    } else {
+                        std::cerr << "Erro ao adicionar a cidade no banco de dados." << std::endl;
+                    }
+                }
+
                 break;
-            }
-            case 2:
-                {
+            } case 2: {
                     std::cout << "Opção 2" << std::endl;
                     break;
                 }
