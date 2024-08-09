@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 project(tests-project)
 
 set(Sources
-    test1.cpp
+    CityGraphTest.cpp
 )
 
 add_executable(tests-project ${Sources})

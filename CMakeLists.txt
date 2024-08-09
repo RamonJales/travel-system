@@ -25,6 +25,7 @@ set(Headers
     src/include/repositories/repositoryCity.hpp
     src/include/repositories/repositoryTransport.hpp
     sqlite3/sqlite3.h
+    src/include/CityGraph.hpp
 )
 set(Sources
     src/impl/City.cpp
@@ -37,6 +38,7 @@ set(Sources
     src/impl/repositories/repositoryCity.cpp
     src/impl/repositories/repositoryTransport.cpp
     sqlite3/sqlite3.c
+    src/impl/CityGraph.cpp
 )
 add_library(travelSystemLib STATIC ${Sources} ${Headers})
 
@@ -52,4 +54,3 @@ target_include_directories(sqlite3 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/sqlite3)
 
 target_include_directories(project PRIVATE src/include)
 target_link_libraries(project PRIVATE travelSystemLib sqlite3)
-
