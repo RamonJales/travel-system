@@ -18,6 +18,14 @@ void createTableCities(sqlite3* db) {
 }
 
 bool addCityInCities(sqlite3* db, const std::string& cityName) {
+
+    City* city = findCityByName(db, cityName);
+    if (city != nullptr) {
+        std::cout << "A cidade \"" << cityName << "\" já está cadastrada no banco de dados." << std::endl;
+        delete city;
+        return false;
+    }
+
     const char* sql_insert = R"(
         INSERT INTO cities (name) VALUES (?);
     )";
@@ -43,12 +51,44 @@ bool addCityInCities(sqlite3* db, const std::string& cityName) {
     return true;
 }
 
-bool cityExistsInDatabase(sqlite3* db, const std::string& cityName) {
-    std::string sql = "SELECT COUNT(*) FROM Cities WHERE Name = ?;";
-    sqlite3_stmt* stmt;
+City* findCityByName(sqlite3* db, const std::string& name) {
+    const char* sql_select = "SELECT name FROM cities WHERE name = ?;";
 
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cerr << "Erro ao preparar a consulta: " << sqlite3_errmsg(db) << std::endl;
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
+        return nullptr;
+    }
+
+    sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
+
+    City* city = nullptr;
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string cityName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+        city = new City(cityName);
+    }
+
+    sqlite3_finalize(stmt);
+    return city;
+}
+
+bool removeCityInCities(sqlite3* db, const std::string& cityName) {
+
+    City* city = findCityByName(db, cityName);
+    if (city == nullptr) {
+        std::cout << "A cidade \"" << cityName << "\" não existe." << std::endl;
+        return false;
+    } 
+    delete city;
+
+    const char* sql_remove = R"(
+        DELETE FROM cities WHERE name = ?;
+    )";
+
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql_remove, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar o SQL de remoção: " << sqlite3_errmsg(db) << std::endl;
         return false;
     }
 
@@ -58,35 +98,6 @@ bool cityExistsInDatabase(sqlite3* db, const std::string& cityName) {
         return false;
     }
 
-    bool exists = false;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        exists = sqlite3_column_int(stmt, 0) > 0;
-    }
-
-    sqlite3_finalize(stmt);
-    return exists;
-}
-
-
-bool removeCityInCities(sqlite3* db, int cityId) {
-    const char* sql_remove = R"(
-        DELETE FROM cities WHERE id = ?;
-    )";
-
-    sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql_remove, -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cerr << "Erro ao preparar o SQL de remoção: " << sqlite3_errmsg(db) << std::endl;
-        return false;
-    }
-
-    // Vincula o id da cidade ao comando SQL
-    if (sqlite3_bind_int(stmt, 1, cityId) != SQLITE_OK) {
-        std::cerr << "Erro ao vincular o id da cidade: " << sqlite3_errmsg(db) << std::endl;
-        sqlite3_finalize(stmt);
-        return false;
-    }
-
-    // Executa o comando SQL
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         std::cerr << "Erro ao remover a cidade: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
@@ -97,9 +108,17 @@ bool removeCityInCities(sqlite3* db, int cityId) {
     return true;
 }
 
-bool editCityInCities(sqlite3* db, int cityId, const std::string& newName) {
+bool editCityInCities(sqlite3* db, const std::string& cityName, const std::string& newName) {
+
+    City* city = findCityByName(db, cityName);
+    if (city == nullptr) {
+        std::cout << "A cidade \"" << cityName << "\" não existe." << std::endl;
+        return false;
+    }
+    delete city;
+
     const char* sql_edit = R"(
-        UPDATE cities SET name = ? WHERE id = ?;
+        UPDATE cities SET name = ? WHERE name = ?;
     )";
 
     sqlite3_stmt* stmt = nullptr;
@@ -108,20 +127,18 @@ bool editCityInCities(sqlite3* db, int cityId, const std::string& newName) {
         return false;
     }
 
-    // Vincula o novo nome e o id da cidade ao comando SQL
     if (sqlite3_bind_text(stmt, 1, newName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
         std::cerr << "Erro ao vincular o novo nome: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
         return false;
     }
 
-    if (sqlite3_bind_int(stmt, 2, cityId) != SQLITE_OK) {
-        std::cerr << "Erro ao vincular o id da cidade: " << sqlite3_errmsg(db) << std::endl;
+    if (sqlite3_bind_text(stmt, 2, cityName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+        std::cerr << "Erro ao vincular o nome atual da cidade: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
         return false;
     }
 
-    // Executa o comando SQL
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         std::cerr << "Erro ao alterar a cidade: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
