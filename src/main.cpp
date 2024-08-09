@@ -7,6 +7,9 @@
 #include "include/Route.hpp"
 #include "include/Transport.hpp"
 #include "include/Trip.hpp"
+#include "include/CityGraph.hpp"
+#include <unordered_map>
+#include <list>
 
 #include "include/repositories/repositoryCity.hpp"
 #include "include/repositories/repositoryTransport.hpp"
@@ -44,8 +47,8 @@ int main() {
 
         std::cout << "Digite a opção: ";
         while (!(std::cin >> option)) {
-            std::cin.clear();  // Clear the error state
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // Discard invalid input
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "Entrada inválida. Digite um número: ";
         }
         getchar();
@@ -70,6 +73,77 @@ int main() {
             case 4:
                 {
                     std::cout << "Opção 4" << std::endl;
+                        std::unordered_map<std::string, std::list<std::pair<std::string, double>>> cityGraph;
+                        CityGraph g = CityGraph(cityGraph);
+                        
+                        g.addEdge("A", "X", 5.0);
+                        g.addEdge("X", "Y", 10.0);
+                        g.addEdge("Y", "B", 3.0);
+                        g.addEdge("A", "B", 5.0);
+
+                        std::string start = "A";
+                        std::string end = "B";
+
+                        std::vector<std::string> path = g.CityGraph::findShortestPath(start, end);
+
+                        if (!path.empty()) {
+                            std::cout << "O melhor trajeto entre " << start << " e " << end << " é:\n";
+                            for (const auto& city : path) {
+                                std::cout << city << " ";
+                            }
+                            std::cout << std::endl;
+                        } else {
+                            std::cout << "Não existe trajeto entre " << start << " e " << end << std::endl;
+                        }
+                    break;
+                }
+            case 5:
+                {
+                    std::string originCity;
+                    std::string destinationCity;
+                    std::string transportName;
+
+                    std::cout << "Digite a cidade de origem: " << std::endl;
+                    std::cin >> originCity;
+                    //find the city in the database with the name
+
+
+                    std::cout << "Digite a cidade de destino: " << std::endl;
+                    std::cin >> destinationCity;
+                    //find the city in the database with the name
+
+                    std::cout << "Digite o nome do transporte: " << std::endl;
+                    std::cin >> transportName;
+                    //find the transport in the database with the name
+
+                    int opt = 1;
+                    while(opt!=0) {
+                        std::cout << "0 - Se deseja parar de adicionar passageiros" << std::endl;
+                        std::cout << "1 - Se deseja adicionar um passageiro" << std::endl;
+                        std::cin >> opt;
+                        if(opt == 1) {
+                            std::string passengerName;
+                            std::cout << "Digite o nome do passageiro: " << std::endl;
+                            std::cin >> passengerName;
+                            //find the passenger in the database with the name
+                            //add the passenger to the list of passengers
+                        }
+                        //clear terminals
+                    }
+
+                    /*verify if the trasnport is in the origin city
+                    for this, the transport need to has a atribute indacting where it is*/
+
+                    /*record the lef of the transport, for this
+                    the trip class need to has a atribute indicating the hour left*/
+
+                    /*record the arrival of the transport, for this
+                    the trip class need to has a atribute indicating the hour arrival*/
+
+                    //use the findShortestPath method to find the best route
+
+                    //create a trip with the information above                  
+
                     break;
                 }
             default:
