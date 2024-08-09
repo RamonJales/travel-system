@@ -2,6 +2,6 @@
 
 City::City(std::string name) : cityName(name) {}
 
-std::string City::getCityName() {
+std::string City::getCityName() const {
     return cityName;
 }
