@@ -136,9 +136,28 @@ int main() {
                 }
             case 3:
                 {
-                    std::cout << "Opção 3" << std::endl;
+                    std::string passengerName;
+
+                    std::cout << "Digite o nome do passageiro: ";
+                    std::getline(std::cin, passengerName);
+
+                    if (passengerName.empty()) {
+                        std::cerr << "Erro: O nome do passageiro não pode ser vazio." << std::endl;
+                        break;
+                    }
+
+                    Passenger* passenger = findPassengerByName(db, passengerName);
+                    if (passenger != nullptr) {
+                        std::cout << "O passageiro \"" << passengerName << "\" já está cadastrado no banco de dados." << std::endl;
+                    } else {
+                        if (addPassengerInPassengers(db, passengerName)) {
+                            std::cout << "Passageiro cadastrado com sucesso!" << std::endl;
+                        } 
+                    }
+
                     break;
                 }
+
             case 4:
                 {
                     std::cout << "Opção 4" << std::endl;
