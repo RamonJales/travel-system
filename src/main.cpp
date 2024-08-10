@@ -14,6 +14,7 @@
 #include "include/repositories/repositoryCity.hpp"
 #include "include/repositories/repositoryTransport.hpp"
 #include "include/repositories/repositoryPassenger.hpp"
+#include "include/repositories/repositoryTrip.hpp"
 
 // #include "include/Travel.hpp"
 #include <list>
@@ -39,6 +40,7 @@ int main() {
     createTableCities(db);
     createTableTransports(db);
     createTablePassengers(db);
+    createTableTrips(db);
 
     //tratar as exceções
 
@@ -57,22 +59,79 @@ int main() {
 
 
         switch (option) {
-           case 1: {
-                std::string cityName;
-                std::cout << "Digite o nome da cidade: ";
-                std::getline(std::cin, cityName);
+           case 1: 
+                {
+                    std::string cityName;
+                    std::cout << "Digite o nome da cidade: ";
+                    std::getline(std::cin, cityName);
 
-                City* city = findCityByName(db, cityName);
-                if (city != nullptr) {
-                    std::cout << "A cidade \"" << cityName << "\" já está cadastrada no banco de dados." << std::endl;
-                } else {
-                    if (addCityInCities(db, cityName)) {
-                        std::cout << "Cidade adicionada com sucesso!" << std::endl;
+                    City* city = findCityByName(db, cityName);
+                    if (city != nullptr) {
+                        std::cout << "A cidade \"" << cityName << "\" já está cadastrada no banco de dados." << std::endl;
+                    } else {
+                        if (addCityInCities(db, cityName)) {
+                            std::cout << "Cidade adicionada com sucesso!" << std::endl;
+                        }
                     }
-                }
-                break;
-            } case 2: {
-                    std::cout << "Opção 2" << std::endl;
+                    break;
+                } 
+            case 2: 
+                {
+                    std::string transportName;
+                    std::cout << "Digite o nome do transporte: ";
+                    std::getline(std::cin, transportName);
+                    Transport* transport = findTransportByName(db, transportName);
+                    if (transport != nullptr) {
+                        std::cout << "O transporte \"" << transportName << "\" já está cadastrado no banco de dados." << std::endl;
+                        break;
+                    }
+
+                    std::string transportTypeString;
+                    std::cout << "Digite o tipo do transporte: ";
+                    std::getline(std::cin, transportTypeString);
+                    TransportTypeEnum transportType = stringToTransportType(transportTypeString);
+
+                    int capacity;
+                    std::cout << "Digite a capacidade: ";
+                    std::cin >> capacity;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    if(capacity <= 0){
+                        std::cout << "Capacidade inválida." << std::endl;
+                        break;
+                    }
+
+                    float speed;
+                    std::cout << "Digite a velocidade: ";
+                    std::cin >> speed;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    if(speed <= 0){
+                        std::cout << "Velocidade inválida." << std::endl;
+                        break;
+                    }
+
+                    float distanceBetweenRest;
+                    std::cout << "Digite a distância entre descansos: ";
+                    std::cin >> distanceBetweenRest;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    if(distanceBetweenRest <= 0){
+                        std::cout << "Distância inválida." << std::endl;
+                        break;
+                    }
+
+                    float restTime;
+                    std::cout << "Digite o tempo de descanso: ";
+                    std::cin >> restTime;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    if(restTime <= 0){
+                        std::cout << "Tempo inválida." << std::endl;
+                        break;
+                    }
+
+                    if(addTransportInTransports(db, transportName, transportTypeToString(transportType), capacity, speed, 
+                    distanceBetweenRest, restTime)){
+                        std::cout << "Transporte " << transportName << " adicionado com sucesso." << std::endl;
+                    }
+
                     break;
                 }
             case 3:
@@ -109,36 +168,83 @@ int main() {
                 }
             case 5:
                 {
+                    int tripId;
                     std::string originCity;
                     std::string destinationCity;
                     std::string transportName;
 
-                    std::cout << "Digite a cidade de origem: " << std::endl;
-                    std::cin >> originCity;
-                    //find the city in the database with the name
+                    std::cout << "Digite o id da viagem: ";
+                    std::cin >> tripId;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    Trip* possibleTrip = findTripById(db, tripId);
+                    if(possibleTrip != nullptr){
+                        std::cout << "Viagem com o id " << tripId << " já existe." << std::endl;
+                        break;
+                    }
 
+                    std::cout << "Digite a cidade de origem: ";
+                    std::getline(std::cin, originCity);
+                    City* possibleOriginCity = findCityByName(db, originCity);
+                    if(possibleOriginCity == nullptr){
+                        std::cout << "Cidade " << originCity << " não existe." << std::endl;
+                        break;
+                    }
 
-                    std::cout << "Digite a cidade de destino: " << std::endl;
-                    std::cin >> destinationCity;
-                    //find the city in the database with the name
+                    std::cout << "Digite a cidade de destino: ";
+                    std::getline(std::cin, destinationCity);
+                    City* possibleDestinationCity = findCityByName(db, destinationCity);
+                    if(possibleDestinationCity == nullptr){
+                        std::cout << "Cidade " << destinationCity << " não existe." << std::endl;
+                        break;
+                    }
 
-                    std::cout << "Digite o nome do transporte: " << std::endl;
-                    std::cin >> transportName;
-                    //find the transport in the database with the name
+                    std::cout << "Digite o nome do transporte: ";
+                    std::getline(std::cin, transportName);
+                    Transport* possibleTransport = findTransportByName(db, transportName);
+                    if(possibleTransport == nullptr){
+                        std::cout << "Transporte " << transportName << " não existe." << std::endl;
+                        break;
+                    }
+
+                    if(!(addTripInTrips(db, tripId, transportName, originCity, destinationCity))){
+                        break;
+                    }
 
                     int opt = 1;
                     while(opt!=0) {
                         std::cout << "0 - Se deseja parar de adicionar passageiros" << std::endl;
                         std::cout << "1 - Se deseja adicionar um passageiro" << std::endl;
                         std::cin >> opt;
-                        if(opt == 1) {
-                            std::string passengerName;
-                            std::cout << "Digite o nome do passageiro: " << std::endl;
-                            std::cin >> passengerName;
-                            //find the passenger in the database with the name
-                            //add the passenger to the list of passengers
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                        switch (opt)
+                        {
+                            case 0:
+                            {
+                                break;
+                            }
+                            case 1:
+                            {
+                                std::string passengerName;
+                                std::cout << "Digite o nome do passageiro: ";
+                                std::getline(std::cin, passengerName);
+                                Passenger* passenger = findPassengerByName(db, passengerName);
+                                if(passenger == nullptr){
+                                    std::cout << "Passageiro " << passengerName << " não existe." << std::endl;
+                                    break;
+                                } else {
+                                    if(addPassengerInTripDB(db, tripId, passenger)){
+                                        std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
+                                        std::cout << "Pressione Enter para continuar...";
+                                        getchar();
+                                    }
+                                    std::system("clear");
+                                }
+                                break;
+                            }
+                            default:
+                                std::cout << "Opção inválida." << std::endl;
+                                break;
                         }
-                        //clear terminals
                     }
 
                     /*verify if the trasnport is in the origin city

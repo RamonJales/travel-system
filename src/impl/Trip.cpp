@@ -10,7 +10,11 @@ Trip::Trip(Transport* transport, std::list<Passenger*> passenger, City* origin, 
     this->tripInProgess = false;
 }
 
-Transport* Trip::getTransport() {
+int Trip::getId() const {
+    return tripId;
+}
+
+Transport* Trip::getTransport() const{
     return transport;
 }
 
@@ -18,24 +22,28 @@ std::list<Passenger*> Trip::getPassenger() {
     return passenger;
 }
 
-City* Trip::getOrigin() {
+City* Trip::getOrigin() const{
     return origin;
 }
 
-City* Trip::getDestination() {
+City* Trip::getDestination() const{
     return destination;
 }
 
-Trip* Trip::getNextTrip() {
+Trip* Trip::getNextTrip() const{
     return nextTrip;
 }
 
-int Trip::getHoursInRoute() {
+int Trip::getHoursInRoute() const{
     return hoursInRoute;
 }
 
-bool Trip::getTripInProgress() {
+bool Trip::getTripInProgress() const{
     return tripInProgess;
+}
+
+void Trip::setId(int tripId) {
+    this->tripId = tripId;
 }
 
 void Trip::setTransport(Transport* transport) {

@@ -25,7 +25,7 @@ void createTableTransports(sqlite3* db) {
     const char* sql_create = R"(
         CREATE TABLE IF NOT EXISTS transports (
             id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
+            name TEXT NOT NULL UNIQUE,
             type TEXT NOT NULL,
             capacity INTEGER NOT NULL,
             speed REAL NOT NULL,
@@ -80,8 +80,8 @@ bool addTransportInTransports(sqlite3* db, const std::string& transportName, con
     return true;
 }
 
-Transport* findTransportById(sqlite3* db, int transportId) {
-    const char* sql_select = "SELECT name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place FROM transports WHERE id = ?;";
+Transport* findTransportByName(sqlite3* db, const std::string& transportName) {
+    const char* sql_select = "SELECT name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place FROM transports WHERE name = ?;";
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -89,7 +89,7 @@ Transport* findTransportById(sqlite3* db, int transportId) {
         return nullptr;
     }
 
-    sqlite3_bind_int(stmt, 1, transportId);
+    sqlite3_bind_text(stmt, 1, transportName.c_str(), -1, SQLITE_STATIC);
 
     Transport* transport = nullptr;
 
@@ -101,7 +101,8 @@ Transport* findTransportById(sqlite3* db, int transportId) {
         float distanceBetweenRest = static_cast<float>(sqlite3_column_double(stmt, 4));
         float restTime = static_cast<float>(sqlite3_column_double(stmt, 5));
         float currentRestTime = static_cast<float>(sqlite3_column_double(stmt, 6));
-        std::string currentPlace(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7)));
+        const unsigned char* cityNameText = sqlite3_column_text(stmt, 7);
+        std::string currentPlace = cityNameText ? reinterpret_cast<const char*>(cityNameText) : "";
 
         // Converte a string para TransportTypeEnum
         TransportTypeEnum type = stringToTransportType(typeString);
@@ -113,9 +114,9 @@ Transport* findTransportById(sqlite3* db, int transportId) {
     return transport;
 }
 
-bool removeTransportInTransports(sqlite3* db, const int transportId) {
+bool removeTransportInTransports(sqlite3* db, const std::string& transportName) {
 
-    Transport* transport = findTransportById(db, transportId);
+    Transport* transport = findTransportByName(db, transportName);
     if (transport == nullptr) {
         std::cout << "O transporte informado não existe." << std::endl;
         return false;
@@ -123,7 +124,7 @@ bool removeTransportInTransports(sqlite3* db, const int transportId) {
     delete transport;
 
     const char* sql_remove = R"(
-        DELETE FROM transports WHERE id = ?;
+        DELETE FROM transports WHERE name = ?;
     )";
 
     sqlite3_stmt* stmt = nullptr;
@@ -132,7 +133,7 @@ bool removeTransportInTransports(sqlite3* db, const int transportId) {
         return false;
     }
 
-    if (sqlite3_bind_int(stmt, 1, transportId) != SQLITE_OK) {
+    if (sqlite3_bind_text(stmt, 1, transportName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
         std::cerr << "Erro ao vincular o nome do transporte: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
         return false;
@@ -148,15 +149,15 @@ bool removeTransportInTransports(sqlite3* db, const int transportId) {
     return true;
 }
 
-bool editTransportInTransports(sqlite3* db, const int transportId, const Transport* newTransport) {
+bool editTransportInTransports(sqlite3* db, const std::string& transportName, const Transport* newTransport) {
 
-    // Tem que adicionar a verificação de se existe transport com esse id na main 
+    // Tem que adicionar a verificação de se existe transport com esse nome na main 
     //     antes de perguntar o resto das informações e chamar essa função
 
     const char* sql_edit = R"(
         UPDATE transports 
         SET name = ?, type = ?, capacity = ?, speed = ?, distance_between_rest = ?, rest_time = ?, current_rest_time = ?, current_place = ?
-        WHERE id = ?;
+        WHERE name = ?;
     )";
 
     sqlite3_stmt* stmt = nullptr;
@@ -173,7 +174,7 @@ bool editTransportInTransports(sqlite3* db, const int transportId, const Transpo
         sqlite3_bind_double(stmt, 6, newTransport->getRestTime()) != SQLITE_OK ||
         sqlite3_bind_double(stmt, 7, newTransport->getCurrentRestTime()) != SQLITE_OK ||
         sqlite3_bind_text(stmt, 8, newTransport->getCurrentPlace()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 9, transportId) != SQLITE_OK) {
+        sqlite3_bind_text(stmt, 9, transportName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
 
         std::cerr << "Erro ao vincular os parâmetros: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
