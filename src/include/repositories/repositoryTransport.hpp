@@ -11,9 +11,7 @@ bool addTransportInTransports(sqlite3* db, const std::string& transportName, con
     const float distanceBetweenRest, const float restTime);
 Transport* findTransportById(sqlite3* db, int transportId);
 bool removeTransportInTransports(sqlite3* db, const int transportId);
-bool editTransportInTransports(sqlite3* db, const int transportId, const std::string& newName, const TransportTypeEnum newType, 
-    const int newCapacity, const float newSpeed, const float newDistanceBetweenRest, const float newRestTime, const float newCurrentRestTime,
-    const std::string& newCurrentPlace);
+bool editTransportInTransports(sqlite3* db, const int transportId, const Transport* newTransport);
 bool listTransportInTransports(sqlite3* db, std::list<Transport>& transports);
 
 #endif

@@ -108,7 +108,7 @@ bool removeCityInCities(sqlite3* db, const std::string& cityName) {
     return true;
 }
 
-bool editCityInCities(sqlite3* db, const std::string& cityName, const std::string& newName) {
+bool editCityInCities(sqlite3* db, const std::string& cityName, const City* newCity) {
 
     City* city = findCityByName(db, cityName);
     if (city == nullptr) {
@@ -127,7 +127,7 @@ bool editCityInCities(sqlite3* db, const std::string& cityName, const std::strin
         return false;
     }
 
-    if (sqlite3_bind_text(stmt, 1, newName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+    if (sqlite3_bind_text(stmt, 1, newCity->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
         std::cerr << "Erro ao vincular o novo nome: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
         return false;

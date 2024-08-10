@@ -124,9 +124,7 @@ bool removeTransportInTransports(sqlite3* db, const int transportId) {
     return true;
 }
 
-bool editTransportInTransports(sqlite3* db, const int transportId, const std::string& newName, const TransportTypeEnum newType, 
-    const int newCapacity, const float newSpeed, const float newDistanceBetweenRest, const float newRestTime, const float newCurrentRestTime,
-    const std::string& newCurrentPlace) {
+bool editTransportInTransports(sqlite3* db, const int transportId, const Transport* newTransport) {
 
     // Tem que adicionar a verificação de se existe transport com esse id na main 
     //     antes de perguntar o resto das informações e chamar essa função
@@ -143,14 +141,14 @@ bool editTransportInTransports(sqlite3* db, const int transportId, const std::st
         return false;
     }
 
-    if (sqlite3_bind_text(stmt, 1, newName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 2, transportTypeEnumToString(newType).c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 3, newCapacity) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 4, newSpeed) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 5, newDistanceBetweenRest) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 6, newRestTime) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 7, newCurrentRestTime) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 8, newCurrentPlace) != SQLITE_OK ||
+    if (sqlite3_bind_text(stmt, 1, newTransport->getTransportName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 2, newTransport->getTransportType().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 3, newTransport->getCapacity()) != SQLITE_OK ||
+        sqlite3_bind_double(stmt, 4, newTransport->getSpeed()) != SQLITE_OK ||
+        sqlite3_bind_double(stmt, 5, newTransport->getDistanceBetweenRest()) != SQLITE_OK ||
+        sqlite3_bind_double(stmt, 6, newTransport->getRestTime()) != SQLITE_OK ||
+        sqlite3_bind_double(stmt, 7, newTransport->getCurrentRestTime()) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 8, newTransport->getCurrentPlace()) != SQLITE_OK ||
         sqlite3_bind_int(stmt, 9, transportId.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
 
         std::cerr << "Erro ao vincular os parâmetros: " << sqlite3_errmsg(db) << std::endl;
