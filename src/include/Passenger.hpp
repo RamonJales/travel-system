@@ -31,13 +31,13 @@ class Passenger {
          * @brief Obtém o nome do passageiro.
          * @return Nome do passageiro.
          */
-        std::string getName();
+        std::string getName() const;
 
         /**
          * @brief Obtém a cidade atual onde o passageiro está.
          * @return Ponteiro para a cidade atual.
          */
-        City* getCurrentLocation();
+        City* getCurrentLocation() const;
 
         /**
          * @brief Define a cidade atual onde o passageiro está.

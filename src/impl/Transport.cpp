@@ -12,35 +12,35 @@ float restTime, float currentRestTime,  City* currentPlace){
     this->currentPlace = currentPlace;
 }
 
-std::string Transport::getTransportName(){
+std::string Transport::getTransportName() const{
     return transportName;
 }
 
-TransportTypeEnum Transport::getTransportType(){
+TransportTypeEnum Transport::getTransportType() const{
     return transportType;
 }
 
-int Transport::getCapacity(){
+int Transport::getCapacity() const{
     return capacity;
 }
 
-float Transport::getSpeed(){
+float Transport::getSpeed() const{
     return speed;
 }
 
-float Transport::getDistanceBetweenRest(){
+float Transport::getDistanceBetweenRest() const{
     return distanceBetweenRest;
 }
 
-float Transport::getRestTime(){
+float Transport::getRestTime() const{
     return restTime;
 }
 
-float Transport::getCurrentRestTime(){
+float Transport::getCurrentRestTime() const{
     return currentRestTime;
 }
 
-City* Transport::getCurrentPlace(){
+City* Transport::getCurrentPlace() const{
     return currentPlace;
 }
 

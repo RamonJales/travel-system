@@ -47,49 +47,49 @@ public:
      * @brief Obtém o nome do transporte.
      * @return Nome do transporte.
      */
-    std::string getTransportName();
+    std::string getTransportName() const;
 
     /**
      * @brief Obtém o tipo de transporte.
      * @return Tipo do transporte (enum TransportTypeEnum).
      */
-    TransportTypeEnum getTransportType();
+    TransportTypeEnum getTransportType() const;
 
     /**
      * @brief Obtém a capacidade do transporte.
      * @return Capacidade do transporte (número de passageiros).
      */
-    int getCapacity();
+    int getCapacity() const;
 
     /**
      * @brief Obtém a velocidade do transporte.
      * @return Velocidade do transporte em km/h.
      */
-    float getSpeed();
+    float getSpeed() const;
 
     /**
      * @brief Obtém a distância entre períodos de descanso.
      * @return Distância entre períodos de descanso em km.
      */
-    float getDistanceBetweenRest();
+    float getDistanceBetweenRest() const;
 
     /**
      * @brief Obtém o tempo de descanso.
      * @return Tempo de descanso em horas.
      */
-    float getRestTime();
+    float getRestTime() const;
 
     /**
      * @brief Obtém o tempo atual de descanso.
      * @return Tempo atual de descanso em horas.
      */
-    float getCurrentRestTime();
+    float getCurrentRestTime() const;
 
     /**
      * @brief Obtém a cidade onde o transporte está localizado.
      * @return Ponteiro para a cidade atual.
      */
-    City* getCurrentPlace();
+    City* getCurrentPlace() const;
 
     /**
      * @brief Define a cidade onde o transporte está localizado.

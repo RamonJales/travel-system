@@ -4,11 +4,11 @@
 Passenger::Passenger(std::string name, City* currentLocation) 
     : name(name), currentLocation(currentLocation) {}
 
-std::string Passenger::getName() {
+std::string Passenger::getName() const{
     return name;
 }
 
-City* Passenger::getCurrentLocation() {
+City* Passenger::getCurrentLocation() const{
     return currentLocation;
 }
 
