@@ -20,6 +20,7 @@
  */
 class Trip {
 private:
+    int tripId;                      ///< Id da viagem
     Transport* transport;            ///< Transporte usado na viagem
     std::list<Passenger*> passenger; ///< Lista de passageiros na viagem
     City* origin;                    ///< Cidade de origem da viagem
@@ -40,10 +41,16 @@ public:
     Trip(Transport* transport, std::list<Passenger*> passenger, City* origin, City* destination);
 
     /**
+     * @brief Obtém o id da viagem.
+     * @return Id da viagem no banco de dados.
+     */
+    int getId() const;
+
+    /**
      * @brief Obtém o transporte usado na viagem.
      * @return Ponteiro para o transporte.
      */
-    Transport* getTransport();
+    Transport* getTransport() const;
 
     /**
      * @brief Obtém a lista de passageiros na viagem.
@@ -55,32 +62,38 @@ public:
      * @brief Obtém a cidade de origem da viagem.
      * @return Ponteiro para a cidade de origem.
      */
-    City* getOrigin();
+    City* getOrigin() const;
 
     /**
      * @brief Obtém a cidade de destino da viagem.
      * @return Ponteiro para a cidade de destino.
      */
-    City* getDestination();
+    City* getDestination() const;
 
     /**
      * @brief Obtém a próxima viagem na sequência.
      * @return Ponteiro para a próxima viagem.
      */
-    Trip* getNextTrip();
+    Trip* getNextTrip() const;
 
     /**
      * @brief Obtém o número de horas em rota.
      * @return Duração da viagem em horas.
      */
-    int getHoursInRoute();
+    int getHoursInRoute() const;
 
     /**
      * @brief Verifica se a viagem está em andamento.
      * @return true se a viagem está em andamento, false se foi concluída.
      */
-    bool getTripInProgress();
+    bool getTripInProgress() const;
 
+    /**
+     * @brief Define o id da viagem.
+     * @param tripId Id da viagem no banco de dados.
+     */
+    void setId(int tripId);
+    
     /**
      * @brief Define o transporte a ser usado na viagem.
      * @param transport Ponteiro para o transporte.
