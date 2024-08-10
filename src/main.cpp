@@ -13,6 +13,7 @@
 
 #include "include/repositories/repositoryCity.hpp"
 #include "include/repositories/repositoryTransport.hpp"
+#include "include/repositories/repositoryPassenger.hpp"
 
 // #include "include/Travel.hpp"
 #include <list>
@@ -37,6 +38,7 @@ int main() {
     }
     createTableCities(db);
     createTableTransports(db);
+    createTablePassengers(db);
 
     //tratar as exceções
 
@@ -60,19 +62,14 @@ int main() {
                 std::cout << "Digite o nome da cidade: ";
                 std::getline(std::cin, cityName);
 
-                if (cityExistsInDatabase(db, cityName)) {
+                City* city = findCityByName(db, cityName);
+                if (city != nullptr) {
                     std::cout << "A cidade \"" << cityName << "\" já está cadastrada no banco de dados." << std::endl;
                 } else {
-                    City city(cityName);
-                    //cityDatabase.push_back(city);  
-
                     if (addCityInCities(db, cityName)) {
                         std::cout << "Cidade adicionada com sucesso!" << std::endl;
-                    } else {
-                        std::cerr << "Erro ao adicionar a cidade no banco de dados." << std::endl;
                     }
                 }
-
                 break;
             } case 2: {
                     std::cout << "Opção 2" << std::endl;

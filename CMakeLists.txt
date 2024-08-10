@@ -24,6 +24,7 @@ set(Headers
     src/include/Controller.hpp
     src/include/repositories/repositoryCity.hpp
     src/include/repositories/repositoryTransport.hpp
+    src/include/repositories/repositoryPassenger.hpp
     sqlite3/sqlite3.h
     src/include/CityGraph.hpp
 )
@@ -37,6 +38,7 @@ set(Sources
     src/impl/Controller.cpp
     src/impl/repositories/repositoryCity.cpp
     src/impl/repositories/repositoryTransport.cpp
+    src/impl/repositories/repositoryPassenger.cpp
     sqlite3/sqlite3.c
     src/impl/CityGraph.cpp
 )
