@@ -101,7 +101,7 @@ int main() {
                     }
 
                     float speed;
-                    std::cout << "Digite a velocidade: ";
+                    std::cout << "Digite a velocidade (em km/h): ";
                     std::cin >> speed;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                     if(speed <= 0){
@@ -110,7 +110,7 @@ int main() {
                     }
 
                     float distanceBetweenRest;
-                    std::cout << "Digite a distância entre descansos: ";
+                    std::cout << "Digite a distância entre descansos (em km): ";
                     std::cin >> distanceBetweenRest;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                     if(distanceBetweenRest <= 0){
@@ -119,7 +119,7 @@ int main() {
                     }
 
                     float restTime;
-                    std::cout << "Digite o tempo de descanso: ";
+                    std::cout << "Digite o tempo de descanso (em h): ";
                     std::cin >> restTime;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                     if(restTime <= 0){
