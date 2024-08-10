@@ -13,6 +13,7 @@
 
 #include "include/repositories/repositoryCity.hpp"
 #include "include/repositories/repositoryTransport.hpp"
+#include "include/repositories/repositoryPassenger.hpp"
 
 // #include "include/Travel.hpp"
 #include <list>
@@ -37,6 +38,7 @@ int main() {
     }
     createTableCities(db);
     createTableTransports(db);
+    createTablePassengers(db);
 
     //tratar as exceções
 
