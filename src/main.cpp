@@ -15,6 +15,7 @@
 #include "include/repositories/repositoryTransport.hpp"
 #include "include/repositories/repositoryPassenger.hpp"
 #include "include/repositories/repositoryTrip.hpp"
+#include "include/repositories/repositoryRoute.hpp"
 
 // #include "include/Travel.hpp"
 #include <list>
@@ -22,15 +23,6 @@
 #include <limits>
 
 int main() {
-    std::list<City> cityDatabase;
-    std::list<Passenger> passengerDatabase;
-    std::list<Route> routeDatabase;
-    // std::list<Travel> travelDatabase;
-    int cityId = 1;
-    int passagerId = 1;
-    int routeId = 1;
-    int travelId = 1;
-
     //iniciar banco de dados e criar as tabelas
     sqlite3 *db;
     if (sqlite3_open("travel-system-database.db", &db)) {
@@ -41,8 +33,12 @@ int main() {
     createTableTransports(db);
     createTablePassengers(db);
     createTableTrips(db);
+    createTableRoutes(db);
 
-    //tratar as exceções
+    std::unordered_map<std::string, std::list<std::pair<std::string, double>>> cityGraph;
+    CityGraph g = CityGraph(cityGraph);
+
+    //Buscar todas as rotas no banco com um findAllRoutes, e adicionar no grafo
 
     int option;
     do {
@@ -157,7 +153,6 @@ int main() {
 
                     break;
                 }
-
             case 4:
                 {
                     std::cout << "Opção 4" << std::endl;
@@ -191,15 +186,7 @@ int main() {
                     std::string originCity;
                     std::string destinationCity;
                     std::string transportName;
-
-                    std::cout << "Digite o id da viagem: ";
-                    std::cin >> tripId;
-                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                    Trip* possibleTrip = findTripById(db, tripId);
-                    if(possibleTrip != nullptr){
-                        std::cout << "Viagem com o id " << tripId << " já existe." << std::endl;
-                        break;
-                    }
+                    std::list<Passenger> passagers;
 
                     std::cout << "Digite a cidade de origem: ";
                     std::getline(std::cin, originCity);
@@ -225,10 +212,6 @@ int main() {
                         break;
                     }
 
-                    if(!(addTripInTrips(db, tripId, transportName, originCity, destinationCity))){
-                        break;
-                    }
-
                     int opt = 1;
                     while(opt!=0) {
                         std::cout << "0 - Se deseja parar de adicionar passageiros" << std::endl;
@@ -251,11 +234,10 @@ int main() {
                                     std::cout << "Passageiro " << passengerName << " não existe." << std::endl;
                                     break;
                                 } else {
-                                    if(addPassengerInTripDB(db, tripId, passenger)){
-                                        std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
-                                        std::cout << "Pressione Enter para continuar...";
-                                        getchar();
-                                    }
+                                    passagers.push_back(*passenger);
+                                    std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
+                                    std::cout << "Pressione Enter para continuar...";
+                                    getchar();
                                     std::system("clear");
                                 }
                                 break;
@@ -266,18 +248,38 @@ int main() {
                         }
                     }
 
-                    /*verify if the trasnport is in the origin city
-                    for this, the transport need to has a atribute indacting where it is*/
+                    if(possibleTransport->getCurrentPlace()->getCityName() != originCity){
+                        std::cout << "O transporte " << transportName << " não está na cidade de origem." << std::endl;
+                        break;
+                    }
 
-                    /*record the lef of the transport, for this
-                    the trip class need to has a atribute indicating the hour left*/
+                    std::vector<std::string> path = g.CityGraph::findShortestPath(originCity, destinationCity);
 
-                    /*record the arrival of the transport, for this
-                    the trip class need to has a atribute indicating the hour arrival*/
+                    if (!path.empty()) {
+                        for (int i = 0; i < path.size() - 1; i++) {
+                            std::string start = path[i];
+                            std::string end = path[i + 1];
+                            Route* route = findRouteByCities(db, start, end);
+                            if(route == nullptr){
+                                std::cout << "Erro no sistema! Não existe trajeto entre " << start << " e " << end << std::endl;
+                                break;
+                            }
+                            double duration = route->getDistance() / possibleTransport->getSpeed();
+                            //ao adicionar a viagem, deveria ter um parametro para adicionar a lista de passageiros
+                            addTripInTrips(db, transportName, start, end, duration);
+                        }
+                        //avançar horas: systemHours += duration
+                    } else {
+                        std::cout << "Não existe trajeto entre " << originCity << " e " << destinationCity << std::endl;
+                    }
 
-                    //use the findShortestPath method to find the best route
+                    for (Passenger passenger : passagers) {
+                        passenger.setCurrentLocation(*possibleDestinationCity);
+                        editPassengerInPassengers(db, passenger);
+                    }
 
-                    //create a trip with the information above                  
+                    possibleTransport->setCurrentPlace(possibleDestinationCity);
+                    editTransportInTransports(db, *possibleTransport);
 
                     break;
                 }
