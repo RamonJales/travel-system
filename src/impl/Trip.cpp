@@ -34,7 +34,7 @@ Trip* Trip::getNextTrip() const{
     return nextTrip;
 }
 
-int Trip::getHoursInRoute() const{
+double Trip::getHoursInRoute() const{
     return hoursInRoute;
 }
 
@@ -66,7 +66,7 @@ void Trip::setNextTrip(Trip* nextTrip) {
     this->nextTrip = nextTrip;
 }
 
-void Trip::setHoursInRoute(int hoursInRoute) {
+void Trip::setHoursInRoute(double hoursInRoute) {
     this->hoursInRoute = hoursInRoute;
 }
 

@@ -16,16 +16,25 @@
  */
 class Passenger {
     private:
+        int id; ///< Identificador do passageiro.
         std::string name; ///< Nome do passageiro.
-        City* currentLocation; ///< Ponteiro para a cidade atual onde o passageiro está.
+        City currentLocation; ///< Ponteiro para a cidade atual onde o passageiro está.
 
     public:
+
         /**
          * @brief Construtor da classe Passenger.
+         * @param id Identificador do passageiro.
          * @param name Nome do passageiro.
          * @param currentLocation Ponteiro para a cidade onde o passageiro está atualmente.
          */
-        Passenger(std::string name, City* currentLocation);
+        Passenger(std::string name, City currentLocation);
+
+        /**
+         * @brief Obtém o identificador do passageiro.
+         * @return Identificador do passageiro.
+         */
+        int getId() const;
 
         /**
          * @brief Obtém o nome do passageiro.
@@ -37,13 +46,20 @@ class Passenger {
          * @brief Obtém a cidade atual onde o passageiro está.
          * @return Ponteiro para a cidade atual.
          */
-        City* getCurrentLocation() const;
+        City getCurrentLocation() const;
 
         /**
          * @brief Define a cidade atual onde o passageiro está.
          * @param newLocation Novo ponteiro para a cidade onde o passageiro deve estar.
          */
-        void setCurrentLocation(City* newLocation);
+        void setCurrentLocation(City newLocation);
+
+        /**
+         * @brief Define o nome do passageiro.
+         * @param name Novo nome do passageiro.
+         */
+        void setId(int id);
+
 };
 
 #endif

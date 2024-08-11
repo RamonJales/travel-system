@@ -28,6 +28,10 @@ float Route::getDistance() {
     return distance;
 }
 
+int Route::getId() {
+    return id;
+}
+
 void Route::setRouteName(std::string routeName) {
     this->routeName = routeName;
 }

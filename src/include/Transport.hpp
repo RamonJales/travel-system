@@ -18,6 +18,7 @@
  */
 class Transport {
 private:
+    int id; ///< Identificador do transporte
     std::string transportName;              ///< Nome do transporte
     TransportTypeEnum transportType;        ///< Tipo de transporte (enum)
     int capacity;                           ///< Capacidade do transporte (número de passageiros)
@@ -31,6 +32,7 @@ public:
     /**
      * @brief Construtor para inicializar um transporte.
      *
+     * @param id Identificador do transporte.
      * @param transportName Nome do transporte.
      * @param transportType Tipo do transporte.
      * @param capacity Capacidade do transporte (número de passageiros).
@@ -40,8 +42,12 @@ public:
      * @param currentRestTime Tempo atual de descanso em horas.
      * @param currentPlace Ponteiro para a cidade onde o transporte está localizado.
      */
-    Transport(std::string transportName, TransportTypeEnum transportType, int capacity, float speed, 
-              float distanceBetweenRest, float restTime, float currentRestTime, City* currentPlace);
+    Transport(int id, std::string transportName, TransportTypeEnum transportType, int capacity, float speed, float distanceBetweenRest, float restTime, float currentRestTime, City* currentPlace);
+
+    /**
+     * @brief Destrutor da classe Transport.
+     */
+    int getId() const;
 
     /**
      * @brief Obtém o nome do transporte.
@@ -96,6 +102,7 @@ public:
      * @param place Ponteiro para a cidade onde o transporte deve ser localizado.
      */
     void setCurrentPlace(City* place);
+
 };
 
 #endif // TRANSPORT_HPP

@@ -15,6 +15,7 @@
  */
 class Route {
     private:
+        int id; ///< Id da rota.
         std::string routeName; ///< Nome da rota.
         std::string originCity; ///< Cidade de origem.
         std::string destinationCity; ///< Cidade de destino.
@@ -61,6 +62,12 @@ class Route {
          * @return Distância da rota em quilômetros.
          */
         float getDistance();
+
+        /**
+         * @brief Obtém o id da rota.
+         * @return Id da rota.
+         */
+        int getId();
 
         /**
          * @brief Define o nome da rota.
