@@ -63,7 +63,8 @@ Passenger* findPassengerByName(sqlite3* db, const std::string& passengerName) {
         std::string currentLocation(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
 
         // Cria o objeto Passenger
-        passenger = new Passenger(name, currentLocation.empty() ? nullptr : findCityByName(db, currentLocation));
+        City* cityPtr = findCityByName(db, currentLocation);
+        passenger = new Passenger(name, *cityPtr);
     }
 
     sqlite3_finalize(stmt);
@@ -104,11 +105,11 @@ bool removePassengerInPassengers(sqlite3* db, const std::string& passengerName) 
     return true;
 }
 
-bool editPassengerInPassengers(sqlite3* db, const std::string& passengerName, const Passenger* newPassenger) {
+bool editPassengerInPassengers(sqlite3* db, Passenger& newPassenger) {
     const char* sql_edit = R"(
         UPDATE passengers 
         SET name = ?, current_location = ?
-        WHERE name = ?;
+        WHERE id = ?;
     )";
 
     sqlite3_stmt* stmt = nullptr;
@@ -117,9 +118,9 @@ bool editPassengerInPassengers(sqlite3* db, const std::string& passengerName, co
         return false;
     }
 
-    if (sqlite3_bind_text(stmt, 1, newPassenger->getName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 2, newPassenger->getCurrentLocation() ? newPassenger->getCurrentLocation()->getCityName().c_str() : "", -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 3, passengerName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+    if (sqlite3_bind_text(stmt, 1, newPassenger.getName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 2, newPassenger.getCurrentLocation().getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 3, newPassenger.getId())  != SQLITE_OK) {
 
         std::cerr << "Erro ao vincular os parâmetros: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);

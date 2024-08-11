@@ -8,7 +8,7 @@ void createTableTrips(sqlite3* db) {
             origin_city_name TEXT NOT NULL,
             destination_city_name TEXT NOT NULL,
             next_trip_id INTEGER,
-            hours_in_route INTEGER,
+            hours_in_route DOUBLE,
             trip_in_progess INTEGER NOT NULL,
             FOREIGN KEY(transport_name) REFERENCES transports(name),
             FOREIGN KEY(origin_city_name) REFERENCES cities(name),
@@ -41,10 +41,10 @@ void createTableTrips(sqlite3* db) {
     }
 }
 
-bool addTripInTrips(sqlite3* db, const int tripId, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName) {
+bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, double hoursInRoute) {
 
     const char* sql_insert = R"(
-        INSERT INTO trips (id, transport_name, origin_city_name, destination_city_name, next_trip_id, hours_in_route, trip_in_progess)
+        INSERT INTO trips (transport_name, origin_city_name, destination_city_name, next_trip_id, hours_in_route, trip_in_progess)
         VALUES (?, ?, ?, ?, NULL, NULL, 0);
     )";
 
@@ -56,10 +56,10 @@ bool addTripInTrips(sqlite3* db, const int tripId, const std::string& transportN
     }
 
     // Vincula os parâmetros ao comando SQL
-    sqlite3_bind_int(stmt, 1, tripId);
-    sqlite3_bind_text(stmt, 2, transportName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, originCityName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 4, destinationCityName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, transportName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, originCityName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, destinationCityName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 4, hoursInRoute);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
