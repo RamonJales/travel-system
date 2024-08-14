@@ -153,7 +153,8 @@ bool listPassengerInPassengers(sqlite3* db, std::list<Passenger>& passengers) {
         std::string currentLocation(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
 
         // Cria o objeto Passenger e adiciona à lista
-        passengers.emplace_back(name, currentLocation.empty() ? nullptr : findCityByName(db, currentLocation));
+        City* city = currentLocation.empty() ? nullptr : findCityByName(db, currentLocation);
+        passengers.emplace_back(name, *city);
     }
 
     sqlite3_finalize(stmt);

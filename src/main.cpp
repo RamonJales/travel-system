@@ -186,7 +186,7 @@ int main() {
                     std::string originCity;
                     std::string destinationCity;
                     std::string transportName;
-                    std::list<Passenger> passagers;
+                    std::list<Passenger*> passagers;
 
                     std::cout << "Digite a cidade de origem: ";
                     std::getline(std::cin, originCity);
@@ -234,7 +234,7 @@ int main() {
                                     std::cout << "Passageiro " << passengerName << " não existe." << std::endl;
                                     break;
                                 } else {
-                                    passagers.push_back(*passenger);
+                                    passagers.push_back(passenger);
                                     std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
                                     std::cout << "Pressione Enter para continuar...";
                                     getchar();
@@ -266,16 +266,16 @@ int main() {
                             }
                             double duration = route->getDistance() / possibleTransport->getSpeed();
                             //ao adicionar a viagem, deveria ter um parametro para adicionar a lista de passageiros
-                            addTripInTrips(db, transportName, start, end, duration);
+                            addTripInTrips(db, transportName, start, end, duration, passagers);
                         }
                         //avançar horas: systemHours += duration
                     } else {
                         std::cout << "Não existe trajeto entre " << originCity << " e " << destinationCity << std::endl;
                     }
 
-                    for (Passenger passenger : passagers) {
-                        passenger.setCurrentLocation(*possibleDestinationCity);
-                        editPassengerInPassengers(db, passenger);
+                    for (Passenger* passenger : passagers) {
+                        passenger->setCurrentLocation(*possibleDestinationCity);
+                        editPassengerInPassengers(db, *passenger);
                     }
 
                     possibleTransport->setCurrentPlace(possibleDestinationCity);

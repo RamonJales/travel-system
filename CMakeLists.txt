@@ -43,6 +43,7 @@ set(Sources
     src/impl/repositories/repositoryPassenger.cpp
     src/impl/repositories/repositoryTrip.cpp
     src/impl/repositories/repositoryRoute.cpp
+    src/impl/enums/RouteTypeEnum.cpp
     sqlite3/sqlite3.c
     src/impl/CityGraph.cpp
 )

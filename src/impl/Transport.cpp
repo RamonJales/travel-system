@@ -1,8 +1,7 @@
 #include "../include/Transport.hpp"
 
-Transport::Transport(int id, std::string transportName, TransportTypeEnum transportType, int capacity, float speed, float distanceBetweenRest, 
+Transport::Transport(std::string transportName, TransportTypeEnum transportType, int capacity, float speed, float distanceBetweenRest, 
 float restTime, float currentRestTime,  City* currentPlace){
-    this->id = id;
     this->transportName = transportName;
     this->transportType = transportType;
     this->capacity = capacity;
@@ -11,10 +10,6 @@ float restTime, float currentRestTime,  City* currentPlace){
     this->restTime = restTime;
     this->currentRestTime = currentRestTime;
     this->currentPlace = currentPlace;
-}
-
-int Transport::getId() const{
-    return id;
 }
 
 std::string Transport::getTransportName() const{
