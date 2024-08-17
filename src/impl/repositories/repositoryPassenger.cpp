@@ -59,12 +59,27 @@ Passenger* findPassengerByName(sqlite3* db, const std::string& passengerName) {
     Passenger* passenger = nullptr;
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string name(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
-        std::string currentLocation(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        const char* nameText = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char* locationText = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
 
-        // Cria o objeto Passenger
-        City* cityPtr = findCityByName(db, currentLocation);
-        passenger = new Passenger(name, *cityPtr);
+        if (nameText) {
+            std::string name(nameText);
+            City* cityPtr = nullptr;
+
+            if (locationText) {
+                std::string currentLocation(locationText);
+                cityPtr = findCityByName(db, currentLocation);
+            }
+
+            if (cityPtr != nullptr) {
+                passenger = new Passenger(name, *cityPtr);
+            } else {
+                City defaultCity;
+                passenger = new Passenger(name, defaultCity);
+            }
+        } else {
+            std::cerr << "Error: Passenger name is NULL in database results." << std::endl;
+        }
     }
 
     sqlite3_finalize(stmt);
