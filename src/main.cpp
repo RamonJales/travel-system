@@ -220,6 +220,8 @@ int main() {
                         std::cout << "Transporte " << transportName << " não existe." << std::endl;
                         break;
                     }
+                    
+                    possibleTransport->setCurrentPlace(possibleOriginCity); //temporario
 
                     int opt = 1;
                     while(opt!=0) {
@@ -274,12 +276,12 @@ int main() {
                                 break;
                             }
                             double duration = route->getDistance() / possibleTransport->getSpeed();
-                            //ao adicionar a viagem, deveria ter um parametro para adicionar a lista de passageiros
                             addTripInTrips(db, transportName, start, end, duration, passagers);
                         }
                         //avançar horas: systemHours += duration
                     } else {
                         std::cout << "Não existe trajeto entre " << originCity << " e " << destinationCity << std::endl;
+                        break;
                     }
 
                     for (Passenger* passenger : passagers) {
