@@ -31,6 +31,14 @@ class Passenger {
         Passenger(std::string name, City currentLocation);
 
         /**
+         * @brief Construtor da classe Passenger.
+         * @param id Identificador do passageiro.
+         * @param name Nome do passageiro.
+         * @param currentLocation Ponteiro para a cidade onde o passageiro está atualmente.
+         */
+        Passenger(std::string name);
+
+        /**
          * @brief Obtém o identificador do passageiro.
          * @return Identificador do passageiro.
          */
