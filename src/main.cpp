@@ -155,29 +155,38 @@ int main() {
                 }
             case 4:
                 {
-                    std::cout << "Opção 4" << std::endl;
-                        std::unordered_map<std::string, std::list<std::pair<std::string, double>>> cityGraph;
-                        CityGraph g = CityGraph(cityGraph);
-                        
-                        g.addEdge("A", "X", 5.0);
-                        g.addEdge("X", "Y", 10.0);
-                        g.addEdge("Y", "B", 3.0);
-                        g.addEdge("A", "B", 5.0);
+                    std::string routeName;
+                    std::string originCityName;
+                    std::string destinationCityName;
+                    std::string routeTypeString;
+                    RouteTypeEnum routeType;
+                    double routeDistance;
 
-                        std::string start = "A";
-                        std::string end = "B";
+                    std::cout << "Digite o nome da rota: ";
+                    std::getline(std::cin, routeName);
 
-                        std::vector<std::string> path = g.CityGraph::findShortestPath(start, end);
+                    std::cout << "Digite o nome da cidade de origem: ";
+                    std::getline(std::cin, originCityName);
 
-                        if (!path.empty()) {
-                            std::cout << "O melhor trajeto entre " << start << " e " << end << " é:\n";
-                            for (const auto& city : path) {
-                                std::cout << city << " ";
-                            }
-                            std::cout << std::endl;
-                        } else {
-                            std::cout << "Não existe trajeto entre " << start << " e " << end << std::endl;
-                        }
+                    std::cout << "Digite o nome da cidade de destino: ";
+                    std::getline(std::cin, destinationCityName);
+
+                    std::cout << "Digite o tipo da rota (1 - Terrestre, 2 - Aquatico): ";
+                    std::cin >> routeTypeString;
+
+                    if (routeTypeString == "1") {
+                        routeType = RouteTypeEnum::LAND;
+                    } else if (routeTypeString == "2") {
+                        routeType = RouteTypeEnum::AQUATIC;
+                    } else {
+                        std::cout << "Tipo de rota inválido." << std::endl;
+                        break;
+                    }
+
+                    Route route = Route(routeName, originCityName, destinationCityName, routeType, routeDistance);
+                    g.addEdge(originCityName, destinationCityName, routeDistance);
+
+                    addRouteInRoutes(db, route);
                     break;
                 }
             case 5:
