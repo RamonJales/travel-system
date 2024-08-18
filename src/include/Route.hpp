@@ -16,7 +16,6 @@
 class Route {
     private:
         int id; ///< Id da rota.
-        std::string routeName; ///< Nome da rota.
         std::string originCity; ///< Cidade de origem.
         std::string destinationCity; ///< Cidade de destino.
         RouteTypeEnum routeType; ///< Tipo da rota.
@@ -25,19 +24,12 @@ class Route {
     public:
         /**
          * @brief Construtor da classe Route.
-         * @param routeName Nome da rota.
          * @param originCity Cidade de origem.
          * @param destinationCity Cidade de destino.
          * @param routeType Tipo da rota.
          * @param distance Distância da rota em quilômetros.
          */
-        Route(std::string routeName, std::string originCity, std::string destinationCity, RouteTypeEnum routeType, float distance);
-
-        /**
-         * @brief Obtém o nome da rota.
-         * @return Nome da rota.
-         */
-        std::string getRouteName();
+        Route(std::string originCity, std::string destinationCity, RouteTypeEnum routeType, float distance);
 
         /**
          * @brief Obtém a cidade de origem.
@@ -68,12 +60,6 @@ class Route {
          * @return Id da rota.
          */
         int getId();
-
-        /**
-         * @brief Define o nome da rota.
-         * @param routeName Novo nome da rota.
-         */
-        void setRouteName(std::string routeName);
 
         /**
          * @brief Define a cidade de origem.

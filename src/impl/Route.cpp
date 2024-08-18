@@ -1,15 +1,10 @@
 #include "../include/Route.hpp"
 
-Route::Route(std::string routeName, std::string originCity, std::string destinationCity, RouteTypeEnum routeType, float distance) {
-    this->routeName = routeName;
+Route::Route(std::string originCity, std::string destinationCity, RouteTypeEnum routeType, float distance) {
     this->originCity = originCity;
     this->destinationCity = destinationCity;
     this->routeType = routeType;
     this->distance = distance;
-}
-
-std::string Route::getRouteName() {
-    return routeName;
 }
 
 std::string Route::getOriginCity() {
@@ -30,10 +25,6 @@ float Route::getDistance() {
 
 int Route::getId() {
     return id;
-}
-
-void Route::setRouteName(std::string routeName) {
-    this->routeName = routeName;
 }
 
 void Route::setOriginCity(std::string originCity) {

@@ -109,7 +109,7 @@ int main() {
                     std::cout << "Digite a distância entre descansos (em km): ";
                     std::cin >> distanceBetweenRest;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                    if(distanceBetweenRest <= 0){
+                    if(distanceBetweenRest < 0){
                         std::cout << "Distância inválida." << std::endl;
                         break;
                     }
@@ -118,7 +118,7 @@ int main() {
                     std::cout << "Digite o tempo de descanso (em h): ";
                     std::cin >> restTime;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                    if(restTime <= 0){
+                    if(restTime < 0){
                         std::cout << "Tempo inválida." << std::endl;
                         break;
                     }
@@ -155,21 +155,19 @@ int main() {
                 }
             case 4:
                 {
-                    std::string routeName;
                     std::string originCityName;
                     std::string destinationCityName;
                     std::string routeTypeString;
                     RouteTypeEnum routeType;
-                    double routeDistance;
-
-                    std::cout << "Digite o nome da rota: ";
-                    std::getline(std::cin, routeName);
+                    float routeDistance;
 
                     std::cout << "Digite o nome da cidade de origem: ";
                     std::getline(std::cin, originCityName);
+                    std::cout << originCityName << std::endl;
 
                     std::cout << "Digite o nome da cidade de destino: ";
                     std::getline(std::cin, destinationCityName);
+                    std::cout << destinationCityName << std::endl;
 
                     std::cout << "Digite o tipo da rota (1 - Terrestre, 2 - Aquatico): ";
                     std::cin >> routeTypeString;
@@ -183,7 +181,10 @@ int main() {
                         break;
                     }
 
-                    Route route = Route(routeName, originCityName, destinationCityName, routeType, routeDistance);
+                    std:: cout << "Digite a distância da rota: (em km)";
+                    std::cin >> routeDistance;
+
+                    Route route = Route(originCityName, destinationCityName, routeType, routeDistance);
                     g.addEdge(originCityName, destinationCityName, routeDistance);
 
                     addRouteInRoutes(db, route);

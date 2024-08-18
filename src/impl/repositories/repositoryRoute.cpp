@@ -79,7 +79,7 @@ bool updateRouteInRoutes(sqlite3* db, Route newRoute) {
 }
 
 Route* findRouteByCities(sqlite3* db, const std::string& originCity, const std::string& destinationCity) {
-    const char* sql_select = "SELECT id, routeName, originCity, destinationCity, routeType, distance FROM routes WHERE originCity = ? AND destinationCity = ?;";
+    const char* sql_select = "SELECT id, originCity, destinationCity, routeType, distance FROM routes WHERE originCity = ? AND destinationCity = ?;";
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -94,12 +94,11 @@ Route* findRouteByCities(sqlite3* db, const std::string& originCity, const std::
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
         int id = sqlite3_column_int(stmt, 0);
-        std::string routeName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
-        std::string originCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
-        std::string destinationCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
-        RouteTypeEnum routeType = stringToRouteType(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4)));
-        double distance = sqlite3_column_double(stmt, 5);
-        route = new Route(routeName, originCity, destinationCity, routeType, distance);
+        std::string originCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        std::string destinationCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
+        RouteTypeEnum routeType = stringToRouteType(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
+        double distance = sqlite3_column_double(stmt, 4);
+        route = new Route(originCity, destinationCity, routeType, distance);
     }
 
     sqlite3_finalize(stmt);
@@ -107,7 +106,7 @@ Route* findRouteByCities(sqlite3* db, const std::string& originCity, const std::
 }
 
 Route* findRouteById(sqlite3* db, const int id) {
-    const char* sql_select = "SELECT id, routeName, originCity, destinationCity, routeType, distance FROM routes WHERE id = ?;";
+    const char* sql_select = "SELECT id, originCity, destinationCity, routeType, distance FROM routes WHERE id = ?;";
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -121,12 +120,11 @@ Route* findRouteById(sqlite3* db, const int id) {
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
         int id = sqlite3_column_int(stmt, 0);
-        std::string routeName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
-        std::string originCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
-        std::string destinationCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
-        RouteTypeEnum routeType = stringToRouteType(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4)));
-        double distance = sqlite3_column_double(stmt, 5);
-        route = new Route(routeName, originCity, destinationCity, routeType, distance);
+        std::string originCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        std::string destinationCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
+        RouteTypeEnum routeType = stringToRouteType(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
+        double distance = sqlite3_column_double(stmt, 4);
+        route = new Route(originCity, destinationCity, routeType, distance);
     }
 
     sqlite3_finalize(stmt);
