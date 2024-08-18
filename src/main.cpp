@@ -163,14 +163,22 @@ int main() {
 
                     std::cout << "Digite o nome da cidade de origem: ";
                     std::getline(std::cin, originCityName);
-                    std::cout << originCityName << std::endl;
+
+                    if(findCityByName(db, originCityName) == nullptr){
+                        std::cout << "Cidade " << originCityName << " não existe." << std::endl;
+                        break;
+                    }
 
                     std::cout << "Digite o nome da cidade de destino: ";
                     std::getline(std::cin, destinationCityName);
-                    std::cout << destinationCityName << std::endl;
+
+                    if(findCityByName(db, destinationCityName) == nullptr){
+                        std::cout << "Cidade " << destinationCityName << " não existe." << std::endl;
+                        break;
+                    }
 
                     std::cout << "Digite o tipo da rota (1 - Terrestre, 2 - Aquatico): ";
-                    std::cin >> routeTypeString;
+                    std::getline(std::cin, routeTypeString);
 
                     if (routeTypeString == "1") {
                         routeType = RouteTypeEnum::LAND;
@@ -181,18 +189,31 @@ int main() {
                         break;
                     }
 
-                    std:: cout << "Digite a distância da rota: (em km)";
+                    //Verificar se a rota entre as cidades já existe no tipo de rota escolhido
+                    Route* possibleRoute = findRouteByCities(db, originCityName, destinationCityName);
+                    if(possibleRoute != nullptr){
+                        if(possibleRoute->getRouteType() == routeType){
+                            std::cout << "Rota já existente." << std::endl;
+                            break;
+                        }
+                    }
+
+                    std:: cout << "Digite a distância da rota: (em km) ";
                     std::cin >> routeDistance;
 
-                    Route route = Route(originCityName, destinationCityName, routeType, routeDistance);
+                    if(routeDistance < 0){
+                        std::cout << "Distância inválida." << std::endl;
+                        break;
+                    }
+
+                    Route* route = new Route(originCityName, destinationCityName, routeType, routeDistance);
                     g.addEdge(originCityName, destinationCityName, routeDistance);
 
-                    addRouteInRoutes(db, route);
+                    addRouteInRoutes(db, *route);
                     break;
                 }
             case 5:
                 {
-                    int tripId;
                     std::string originCity;
                     std::string destinationCity;
                     std::string transportName;

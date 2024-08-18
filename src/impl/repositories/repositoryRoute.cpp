@@ -8,8 +8,8 @@ void createTableRoutes(sqlite3* db) {
             id INTEGER PRIMARY KEY,
             originCity TEXT NOT NULL,
             destinationCity TEXT NOT NULL,
-            routeType TEXT NOT NULL,
-            distance REAL NOT NULL CHECK(routeType IN ('LAND', 'AQUATIC'))
+            routeType TEXT NOT NULL CHECK(routeType IN ('LAND', 'AQUATIC')),
+            distance REAL NOT NULL
         );
     )";
 
@@ -33,10 +33,15 @@ bool addRouteInRoutes(sqlite3* db, Route& route) {
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, route.getOriginCity().c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, route.getDestinationCity().c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, (routeTypeToString(route.getRouteType())).c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_double(stmt, 4, route.getDistance());
+    const std::string originCity = route.getOriginCity();
+    const std::string destinationCity = route.getDestinationCity();
+    const std::string routeTypeStr = routeTypeToString(route.getRouteType());
+    const float distance = route.getDistance();
+
+    sqlite3_bind_text(stmt, 1, originCity.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, destinationCity.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, routeTypeStr.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, 4, distance);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
@@ -94,11 +99,11 @@ Route* findRouteByCities(sqlite3* db, const std::string& originCity, const std::
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
         int id = sqlite3_column_int(stmt, 0);
-        std::string originCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
-        std::string destinationCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
+        std::string originCityName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        std::string destinationCityName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
         RouteTypeEnum routeType = stringToRouteType(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
-        double distance = sqlite3_column_double(stmt, 4);
-        route = new Route(originCity, destinationCity, routeType, distance);
+        float distance = sqlite3_column_double(stmt, 4);
+        route = new Route(originCityName, destinationCityName, routeType, distance);
     }
 
     sqlite3_finalize(stmt);
@@ -123,7 +128,7 @@ Route* findRouteById(sqlite3* db, const int id) {
         std::string originCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
         std::string destinationCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
         RouteTypeEnum routeType = stringToRouteType(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
-        double distance = sqlite3_column_double(stmt, 4);
+        float distance = sqlite3_column_double(stmt, 4);
         route = new Route(originCity, destinationCity, routeType, distance);
     }
 
