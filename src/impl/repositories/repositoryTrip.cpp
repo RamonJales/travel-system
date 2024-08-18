@@ -44,8 +44,8 @@ void createTableTrips(sqlite3* db) {
 bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers) {
 
     const char* sql_insert = R"(
-        INSERT INTO trips (transport_name, origin_city_name, destination_city_name, next_trip_id, hours_in_route, trip_in_progess)
-        VALUES (?, ?, ?, ?, NULL, NULL, 0);
+        INSERT INTO trips (transport_name, origin_city_name, destination_city_name, hours_in_route, trip_in_progess)
+        VALUES (?, ?, ?, ?, 0);
     )";
 
     sqlite3_stmt* stmt;

@@ -47,11 +47,11 @@ void createTableTransports(sqlite3* db) {
 }
 
 bool addTransportInTransports(sqlite3* db, const std::string& transportName, const std::string& type, const int capacity, const float speed,
-    const float distanceBetweenRest, const float restTime) {
+    const float distanceBetweenRest, const float restTime, const std::string currentPlace) {
 
     const char* sql_insert = R"(
         INSERT INTO transports (name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place)
-        VALUES (?, ?, ?, ?, ?, ?, 0, NULL);
+        VALUES (?, ?, ?, ?, ?, ?, 0, ?);
     )";
 
     sqlite3_stmt* stmt;
@@ -68,6 +68,7 @@ bool addTransportInTransports(sqlite3* db, const std::string& transportName, con
     sqlite3_bind_double(stmt, 4, speed);
     sqlite3_bind_double(stmt, 5, distanceBetweenRest);
     sqlite3_bind_double(stmt, 6, restTime);
+    sqlite3_bind_text(stmt, 7, currentPlace.c_str(), -1, SQLITE_STATIC);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {

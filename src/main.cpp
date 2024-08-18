@@ -38,7 +38,11 @@ int main() {
     std::unordered_map<std::string, std::list<std::pair<std::string, double>>> cityGraph;
     CityGraph g = CityGraph(cityGraph);
 
-    //Buscar todas as rotas no banco com um findAllRoutes, e adicionar no grafo
+    // Buscar to das as rotas no banco com um findAllRoutes, e adicionar no grafo
+    std::vector<Route> routes = findAllRoutesInRoutes(db);
+    for (Route route : routes) {
+        g.addEdge(route.getOriginCity(), route.getDestinationCity(), route.getDistance());
+    }
 
     int option;
     do {
@@ -123,8 +127,17 @@ int main() {
                         break;
                     }
 
+                    std::string currentPlace;
+                    std::cout << "Digite o nome da cidade atual: ";
+                    std::getline(std::cin, currentPlace);
+                    City* city = findCityByName(db, currentPlace);
+                    if(city == nullptr){
+                        std::cout << "Cidade " << currentPlace << " não existe." << std::endl;
+                        break;
+                    }
+
                     if(addTransportInTransports(db, transportName, transportTypeToString(transportType), capacity, speed, 
-                    distanceBetweenRest, restTime)){
+                    distanceBetweenRest, restTime, currentPlace)){
                         std::cout << "Transporte " << transportName << " adicionado com sucesso." << std::endl;
                     }
 
@@ -331,3 +344,4 @@ int main() {
 
     return 0;
 }
+

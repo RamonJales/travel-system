@@ -157,3 +157,28 @@ bool deleteRouteByIdInRoutes(sqlite3* db, const int id) {
     sqlite3_finalize(stmt);
     return true;
 }
+
+std::vector<Route> findAllRoutesInRoutes(sqlite3* db) {
+    const char* sql_select = "SELECT originCity, destinationCity, routeType, distance FROM routes;";
+
+    sqlite3_stmt* stmt;
+    std::vector<Route> routes;
+
+    if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
+        return routes;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string originCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+        std::string destinationCity(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        RouteTypeEnum routeType = stringToRouteType(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
+        float distance = sqlite3_column_double(stmt, 3);
+
+        Route route(originCity, destinationCity, routeType, distance);
+        routes.push_back(route);
+    }
+
+    sqlite3_finalize(stmt);
+    return routes;
+}
