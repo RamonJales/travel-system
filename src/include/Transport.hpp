@@ -40,8 +40,7 @@ public:
      * @param currentRestTime Tempo atual de descanso em horas.
      * @param currentPlace Ponteiro para a cidade onde o transporte está localizado.
      */
-    Transport(std::string transportName, TransportTypeEnum transportType, int capacity, float speed, 
-              float distanceBetweenRest, float restTime, float currentRestTime, City* currentPlace);
+    Transport(std::string transportName, TransportTypeEnum transportType, int capacity, float speed, float distanceBetweenRest, float restTime, float currentRestTime, City* currentPlace);
 
     /**
      * @brief Obtém o nome do transporte.
@@ -96,6 +95,7 @@ public:
      * @param place Ponteiro para a cidade onde o transporte deve ser localizado.
      */
     void setCurrentPlace(City* place);
+
 };
 
 #endif // TRANSPORT_HPP

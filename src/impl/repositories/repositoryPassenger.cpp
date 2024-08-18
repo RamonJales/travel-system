@@ -59,11 +59,27 @@ Passenger* findPassengerByName(sqlite3* db, const std::string& passengerName) {
     Passenger* passenger = nullptr;
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string name(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
-        std::string currentLocation(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        const char* nameText = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char* locationText = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
 
-        // Cria o objeto Passenger
-        passenger = new Passenger(name, currentLocation.empty() ? nullptr : findCityByName(db, currentLocation));
+        if (nameText) {
+            std::string name(nameText);
+            City* cityPtr = nullptr;
+
+            if (locationText) {
+                std::string currentLocation(locationText);
+                cityPtr = findCityByName(db, currentLocation);
+            }
+
+            if (cityPtr != nullptr) {
+                passenger = new Passenger(name, *cityPtr);
+            } else {
+                City defaultCity;
+                passenger = new Passenger(name, defaultCity);
+            }
+        } else {
+            std::cerr << "Error: Passenger name is NULL in database results." << std::endl;
+        }
     }
 
     sqlite3_finalize(stmt);
@@ -104,11 +120,11 @@ bool removePassengerInPassengers(sqlite3* db, const std::string& passengerName) 
     return true;
 }
 
-bool editPassengerInPassengers(sqlite3* db, const std::string& passengerName, const Passenger* newPassenger) {
+bool editPassengerInPassengers(sqlite3* db, Passenger& newPassenger) {
     const char* sql_edit = R"(
         UPDATE passengers 
         SET name = ?, current_location = ?
-        WHERE name = ?;
+        WHERE id = ?;
     )";
 
     sqlite3_stmt* stmt = nullptr;
@@ -117,9 +133,9 @@ bool editPassengerInPassengers(sqlite3* db, const std::string& passengerName, co
         return false;
     }
 
-    if (sqlite3_bind_text(stmt, 1, newPassenger->getName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 2, newPassenger->getCurrentLocation() ? newPassenger->getCurrentLocation()->getCityName().c_str() : "", -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 3, passengerName.c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+    if (sqlite3_bind_text(stmt, 1, newPassenger.getName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 2, newPassenger.getCurrentLocation().getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 3, newPassenger.getId())  != SQLITE_OK) {
 
         std::cerr << "Erro ao vincular os parâmetros: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
@@ -152,7 +168,8 @@ bool listPassengerInPassengers(sqlite3* db, std::list<Passenger>& passengers) {
         std::string currentLocation(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
 
         // Cria o objeto Passenger e adiciona à lista
-        passengers.emplace_back(name, currentLocation.empty() ? nullptr : findCityByName(db, currentLocation));
+        City* city = currentLocation.empty() ? nullptr : findCityByName(db, currentLocation);
+        passengers.emplace_back(name, *city);
     }
 
     sqlite3_finalize(stmt);

@@ -26,7 +26,7 @@ private:
     City* origin;                    ///< Cidade de origem da viagem
     City* destination;               ///< Cidade de destino da viagem
     Trip *nextTrip;                  ///< Próxima viagem, caso exista uma sequência
-    int hoursInRoute;                ///< Duração da viagem em horas
+    double hoursInRoute;                ///< Duração da viagem em horas
     bool tripInProgess;              ///< Status da viagem (em andamento ou concluída)
 
 public:
@@ -80,7 +80,7 @@ public:
      * @brief Obtém o número de horas em rota.
      * @return Duração da viagem em horas.
      */
-    int getHoursInRoute() const;
+    double getHoursInRoute() const;
 
     /**
      * @brief Verifica se a viagem está em andamento.
@@ -128,7 +128,7 @@ public:
      * @brief Define o número de horas em rota.
      * @param hoursInRoute Duração da viagem em horas.
      */
-    void setHoursInRoute(int hoursInRoute);
+    void setHoursInRoute(double hoursInRoute);
 
     /**
      * @brief Define o status da viagem.

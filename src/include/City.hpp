@@ -24,6 +24,12 @@ class City {
         City(std::string name);
 
         /**
+         * @brief Construtor da classe City.
+         * @param name Nome da cidade.
+         */
+        City();
+
+        /**
          * @brief Obtém o nome da cidade.
          * @return Nome da cidade.
          */

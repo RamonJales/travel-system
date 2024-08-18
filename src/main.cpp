@@ -15,6 +15,7 @@
 #include "include/repositories/repositoryTransport.hpp"
 #include "include/repositories/repositoryPassenger.hpp"
 #include "include/repositories/repositoryTrip.hpp"
+#include "include/repositories/repositoryRoute.hpp"
 
 // #include "include/Travel.hpp"
 #include <list>
@@ -22,15 +23,6 @@
 #include <limits>
 
 int main() {
-    std::list<City> cityDatabase;
-    std::list<Passenger> passengerDatabase;
-    std::list<Route> routeDatabase;
-    // std::list<Travel> travelDatabase;
-    int cityId = 1;
-    int passagerId = 1;
-    int routeId = 1;
-    int travelId = 1;
-
     //iniciar banco de dados e criar as tabelas
     sqlite3 *db;
     if (sqlite3_open("travel-system-database.db", &db)) {
@@ -41,8 +33,16 @@ int main() {
     createTableTransports(db);
     createTablePassengers(db);
     createTableTrips(db);
+    createTableRoutes(db);
 
-    //tratar as exceções
+    std::unordered_map<std::string, std::list<std::pair<std::string, double>>> cityGraph;
+    CityGraph g = CityGraph(cityGraph);
+
+    // Buscar to das as rotas no banco com um findAllRoutes, e adicionar no grafo
+    std::vector<Route> routes = findAllRoutesInRoutes(db);
+    for (Route route : routes) {
+        g.addEdge(route.getOriginCity(), route.getDestinationCity(), route.getDistance());
+    }
 
     int option;
     do {
@@ -113,7 +113,7 @@ int main() {
                     std::cout << "Digite a distância entre descansos (em km): ";
                     std::cin >> distanceBetweenRest;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                    if(distanceBetweenRest <= 0){
+                    if(distanceBetweenRest < 0){
                         std::cout << "Distância inválida." << std::endl;
                         break;
                     }
@@ -122,13 +122,22 @@ int main() {
                     std::cout << "Digite o tempo de descanso (em h): ";
                     std::cin >> restTime;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                    if(restTime <= 0){
+                    if(restTime < 0){
                         std::cout << "Tempo inválida." << std::endl;
                         break;
                     }
 
+                    std::string currentPlace;
+                    std::cout << "Digite o nome da cidade atual: ";
+                    std::getline(std::cin, currentPlace);
+                    City* city = findCityByName(db, currentPlace);
+                    if(city == nullptr){
+                        std::cout << "Cidade " << currentPlace << " não existe." << std::endl;
+                        break;
+                    }
+
                     if(addTransportInTransports(db, transportName, transportTypeToString(transportType), capacity, speed, 
-                    distanceBetweenRest, restTime)){
+                    distanceBetweenRest, restTime, currentPlace)){
                         std::cout << "Transporte " << transportName << " adicionado com sucesso." << std::endl;
                     }
 
@@ -157,49 +166,71 @@ int main() {
 
                     break;
                 }
-
             case 4:
                 {
-                    std::cout << "Opção 4" << std::endl;
-                        std::unordered_map<std::string, std::list<std::pair<std::string, double>>> cityGraph;
-                        CityGraph g = CityGraph(cityGraph);
-                        
-                        g.addEdge("A", "X", 5.0);
-                        g.addEdge("X", "Y", 10.0);
-                        g.addEdge("Y", "B", 3.0);
-                        g.addEdge("A", "B", 5.0);
+                    std::string originCityName;
+                    std::string destinationCityName;
+                    std::string routeTypeString;
+                    RouteTypeEnum routeType;
+                    float routeDistance;
 
-                        std::string start = "A";
-                        std::string end = "B";
+                    std::cout << "Digite o nome da cidade de origem: ";
+                    std::getline(std::cin, originCityName);
 
-                        std::vector<std::string> path = g.CityGraph::findShortestPath(start, end);
+                    if(findCityByName(db, originCityName) == nullptr){
+                        std::cout << "Cidade " << originCityName << " não existe." << std::endl;
+                        break;
+                    }
 
-                        if (!path.empty()) {
-                            std::cout << "O melhor trajeto entre " << start << " e " << end << " é:\n";
-                            for (const auto& city : path) {
-                                std::cout << city << " ";
-                            }
-                            std::cout << std::endl;
-                        } else {
-                            std::cout << "Não existe trajeto entre " << start << " e " << end << std::endl;
+                    std::cout << "Digite o nome da cidade de destino: ";
+                    std::getline(std::cin, destinationCityName);
+
+                    if(findCityByName(db, destinationCityName) == nullptr){
+                        std::cout << "Cidade " << destinationCityName << " não existe." << std::endl;
+                        break;
+                    }
+
+                    std::cout << "Digite o tipo da rota (1 - Terrestre, 2 - Aquatico): ";
+                    std::getline(std::cin, routeTypeString);
+
+                    if (routeTypeString == "1") {
+                        routeType = RouteTypeEnum::LAND;
+                    } else if (routeTypeString == "2") {
+                        routeType = RouteTypeEnum::AQUATIC;
+                    } else {
+                        std::cout << "Tipo de rota inválido." << std::endl;
+                        break;
+                    }
+
+                    //Verificar se a rota entre as cidades já existe no tipo de rota escolhido
+                    Route* possibleRoute = findRouteByCities(db, originCityName, destinationCityName);
+                    if(possibleRoute != nullptr){
+                        if(possibleRoute->getRouteType() == routeType){
+                            std::cout << "Rota já existente." << std::endl;
+                            break;
                         }
+                    }
+
+                    std:: cout << "Digite a distância da rota: (em km) ";
+                    std::cin >> routeDistance;
+
+                    if(routeDistance < 0){
+                        std::cout << "Distância inválida." << std::endl;
+                        break;
+                    }
+
+                    Route* route = new Route(originCityName, destinationCityName, routeType, routeDistance);
+                    g.addEdge(originCityName, destinationCityName, routeDistance);
+
+                    addRouteInRoutes(db, *route);
                     break;
                 }
             case 5:
                 {
-                    int tripId;
                     std::string originCity;
                     std::string destinationCity;
                     std::string transportName;
-
-                    std::cout << "Digite o id da viagem: ";
-                    std::cin >> tripId;
-                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                    Trip* possibleTrip = findTripById(db, tripId);
-                    if(possibleTrip != nullptr){
-                        std::cout << "Viagem com o id " << tripId << " já existe." << std::endl;
-                        break;
-                    }
+                    std::list<Passenger*> passagers;
 
                     std::cout << "Digite a cidade de origem: ";
                     std::getline(std::cin, originCity);
@@ -224,10 +255,8 @@ int main() {
                         std::cout << "Transporte " << transportName << " não existe." << std::endl;
                         break;
                     }
-
-                    if(!(addTripInTrips(db, tripId, transportName, originCity, destinationCity))){
-                        break;
-                    }
+                    
+                    possibleTransport->setCurrentPlace(possibleOriginCity); //temporario
 
                     int opt = 1;
                     while(opt!=0) {
@@ -251,11 +280,10 @@ int main() {
                                     std::cout << "Passageiro " << passengerName << " não existe." << std::endl;
                                     break;
                                 } else {
-                                    if(addPassengerInTripDB(db, tripId, passenger)){
-                                        std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
-                                        std::cout << "Pressione Enter para continuar...";
-                                        getchar();
-                                    }
+                                    passagers.push_back(passenger);
+                                    std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
+                                    std::cout << "Pressione Enter para continuar...";
+                                    getchar();
                                     std::system("clear");
                                 }
                                 break;
@@ -266,18 +294,38 @@ int main() {
                         }
                     }
 
-                    /*verify if the trasnport is in the origin city
-                    for this, the transport need to has a atribute indacting where it is*/
+                    if(possibleTransport->getCurrentPlace()->getCityName() != originCity){
+                        std::cout << "O transporte " << transportName << " não está na cidade de origem." << std::endl;
+                        break;
+                    }
 
-                    /*record the lef of the transport, for this
-                    the trip class need to has a atribute indicating the hour left*/
+                    std::vector<std::string> path = g.CityGraph::findShortestPath(originCity, destinationCity);
 
-                    /*record the arrival of the transport, for this
-                    the trip class need to has a atribute indicating the hour arrival*/
+                    if (!path.empty()) {
+                        for (int i = 0; i < path.size() - 1; i++) {
+                            std::string start = path[i];
+                            std::string end = path[i + 1];
+                            Route* route = findRouteByCities(db, start, end);
+                            if(route == nullptr){
+                                std::cout << "Erro no sistema! Não existe trajeto entre " << start << " e " << end << std::endl;
+                                break;
+                            }
+                            double duration = route->getDistance() / possibleTransport->getSpeed();
+                            addTripInTrips(db, transportName, start, end, duration, passagers);
+                        }
+                        //avançar horas: systemHours += duration
+                    } else {
+                        std::cout << "Não existe trajeto entre " << originCity << " e " << destinationCity << std::endl;
+                        break;
+                    }
 
-                    //use the findShortestPath method to find the best route
+                    for (Passenger* passenger : passagers) {
+                        passenger->setCurrentLocation(*possibleDestinationCity);
+                        editPassengerInPassengers(db, *passenger);
+                    }
 
-                    //create a trip with the information above                  
+                    possibleTransport->setCurrentPlace(possibleDestinationCity);
+                    editTransportInTransports(db, *possibleTransport);
 
                     break;
                 }
@@ -296,3 +344,4 @@ int main() {
 
     return 0;
 }
+

@@ -8,7 +8,7 @@ void createTableTrips(sqlite3* db) {
             origin_city_name TEXT NOT NULL,
             destination_city_name TEXT NOT NULL,
             next_trip_id INTEGER,
-            hours_in_route INTEGER,
+            hours_in_route DOUBLE,
             trip_in_progess INTEGER NOT NULL,
             FOREIGN KEY(transport_name) REFERENCES transports(name),
             FOREIGN KEY(origin_city_name) REFERENCES cities(name),
@@ -41,11 +41,11 @@ void createTableTrips(sqlite3* db) {
     }
 }
 
-bool addTripInTrips(sqlite3* db, const int tripId, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName) {
+bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers) {
 
     const char* sql_insert = R"(
-        INSERT INTO trips (id, transport_name, origin_city_name, destination_city_name, next_trip_id, hours_in_route, trip_in_progess)
-        VALUES (?, ?, ?, ?, NULL, NULL, 0);
+        INSERT INTO trips (transport_name, origin_city_name, destination_city_name, hours_in_route, trip_in_progess)
+        VALUES (?, ?, ?, ?, 0);
     )";
 
     sqlite3_stmt* stmt;
@@ -56,10 +56,10 @@ bool addTripInTrips(sqlite3* db, const int tripId, const std::string& transportN
     }
 
     // Vincula os parâmetros ao comando SQL
-    sqlite3_bind_int(stmt, 1, tripId);
-    sqlite3_bind_text(stmt, 2, transportName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, originCityName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 4, destinationCityName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, transportName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, originCityName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, destinationCityName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, 4, hoursInRoute);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
@@ -68,7 +68,11 @@ bool addTripInTrips(sqlite3* db, const int tripId, const std::string& transportN
         return false;
     }
 
+    // Captura o ID da linha recém-criada
+    int tripId = sqlite3_last_insert_rowid(db);
+
     sqlite3_finalize(stmt);
+    addPassengersInTripDB(db, tripId, passengers);
     return true;
 }
 
@@ -131,31 +135,33 @@ std::list<Passenger*> findPassengersInTrip(sqlite3* db, int tripId){
 
 }
 
-bool addPassengerInTripDB (sqlite3* db, const int tripId, const Passenger* passenger){
-    const char* sql_insert = R"(
-        INSERT INTO pivot_trips_passengers (trip_id, passenger_name)
-        VALUES (?, ?);
-    )";
+bool addPassengersInTripDB (sqlite3* db, const int tripId, const std::list<Passenger*> passengers){
+    for (Passenger* passenger : passengers) {
+        const char* sql_insert = R"(
+            INSERT INTO pivot_trips_passengers (trip_id, passenger_name)
+            VALUES (?, ?);
+        )";
 
-    sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db, sql_insert, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        std::cerr << "Erro ao preparar o SQL: " << sqlite3_errmsg(db) << std::endl;
-        return false;
-    }
+        sqlite3_stmt* stmt;
+        int rc = sqlite3_prepare_v2(db, sql_insert, -1, &stmt, nullptr);
+        if (rc != SQLITE_OK) {
+            std::cerr << "Erro ao preparar o SQL: " << sqlite3_errmsg(db) << std::endl;
+            return false;
+        }
 
-    // Vincula os parâmetros ao comando SQL
-    sqlite3_bind_int(stmt, 1, tripId);
-    sqlite3_bind_text(stmt, 2, passenger->getName().c_str(), -1, SQLITE_STATIC);
+        // Vincula os parâmetros ao comando SQL
+        sqlite3_bind_int(stmt, 1, tripId);
+        sqlite3_bind_text(stmt, 2, passenger->getName().c_str(), -1, SQLITE_STATIC);
 
-    rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE) {
-        std::cerr << "Erro ao inserir o transporte: " << sqlite3_errmsg(db) << std::endl;
+        rc = sqlite3_step(stmt);
+        if (rc != SQLITE_DONE) {
+            std::cerr << "Erro ao inserir passageiros: " << sqlite3_errmsg(db) << std::endl;
+            sqlite3_finalize(stmt);
+            return false;
+        }
+
         sqlite3_finalize(stmt);
-        return false;
     }
-
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -234,7 +240,7 @@ bool editTripInTrips(sqlite3* db, const int tripId, const Trip* newTrip) {
         sqlite3_bind_text(stmt, 2, newTrip->getOrigin()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
         sqlite3_bind_text(stmt, 3, newTrip->getDestination()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
         sqlite3_bind_int(stmt, 4, newTrip->getNextTrip()->getId()) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 5, newTrip->getHoursInRoute()) != SQLITE_OK ||
+        sqlite3_bind_double(stmt, 5, newTrip->getHoursInRoute()) != SQLITE_OK ||
         sqlite3_bind_int(stmt, 6, newTrip->getTripInProgress()) != SQLITE_OK ||
         sqlite3_bind_int(stmt, 7, tripId) != SQLITE_OK) {
 
