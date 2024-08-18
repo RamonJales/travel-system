@@ -59,7 +59,7 @@ bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::st
     sqlite3_bind_text(stmt, 1, transportName.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, originCityName.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 3, destinationCityName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 4, hoursInRoute);
+    sqlite3_bind_double(stmt, 4, hoursInRoute);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
@@ -240,7 +240,7 @@ bool editTripInTrips(sqlite3* db, const int tripId, const Trip* newTrip) {
         sqlite3_bind_text(stmt, 2, newTrip->getOrigin()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
         sqlite3_bind_text(stmt, 3, newTrip->getDestination()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
         sqlite3_bind_int(stmt, 4, newTrip->getNextTrip()->getId()) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 5, newTrip->getHoursInRoute()) != SQLITE_OK ||
+        sqlite3_bind_double(stmt, 5, newTrip->getHoursInRoute()) != SQLITE_OK ||
         sqlite3_bind_int(stmt, 6, newTrip->getTripInProgress()) != SQLITE_OK ||
         sqlite3_bind_int(stmt, 7, tripId) != SQLITE_OK) {
 
