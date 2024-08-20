@@ -9,13 +9,17 @@
 #include <iostream>
 #include <list>
 
+#include "../../include/repositories/repositoryTrip.hpp"
+
 void createTableTrips(sqlite3* db);
-bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers);
+bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers, const bool inProgress);
 Trip* findTripById(sqlite3* db, int tripId);
 std::list<Passenger*> findPassengersInTrip(sqlite3* db, int tripId);
-bool addPassengersInTripDB (sqlite3* db, const int tripId, const std::list<Passenger*> passengers);
+bool addPassengersInTripDB(sqlite3* db, const int tripId, const std::list<Passenger*> passengers);
 bool removeTripInTrips(sqlite3* db, const int tripId);
-bool editTripInTrips(sqlite3* db, const int tripId, const Trip* newTrip);
-bool listTripInTrips(sqlite3* db, std::list<Trip*>& trips);
-
+bool editTripInTrips(sqlite3* db, Trip* trip);
+bool updateTripInProgress(sqlite3* db, int tripId, bool inProgress);
+std::list<Trip*> listTripInTrips(sqlite3* db);
+std::list<Trip*> listTripsInProgress(sqlite3* db);
+bool advanceHours(sqlite3* db, double hours);
 #endif

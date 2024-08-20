@@ -224,3 +224,26 @@ bool listTransportInTransports(sqlite3* db, std::list<Transport>& transports) {
     sqlite3_finalize(stmt);
     return true;
 }
+
+std::list<Transport*> findAllTransports(sqlite3* db) {
+    std::list<Transport*> transports;
+
+    const char* sql_select_all = "SELECT name FROM transports;";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql_select_all, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
+        return transports;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string transportName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+        Transport* transport = findTransportByName(db, transportName);
+        if (transport) {
+            transports.push_back(transport);
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return transports;
+}

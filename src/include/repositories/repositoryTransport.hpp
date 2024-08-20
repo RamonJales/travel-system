@@ -18,5 +18,6 @@ Transport* findTransportByName(sqlite3* db, const std::string& transportName);
 bool removeTransportInTransports(sqlite3* db, const std::string& transportName);
 bool editTransportInTransports(sqlite3* db, const Transport& newTransport);
 bool listTransportInTransports(sqlite3* db, std::list<Transport>& transports);
+std::list<Transport*> findAllTransports(sqlite3* db);
 
 #endif

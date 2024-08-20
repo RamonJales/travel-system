@@ -87,7 +87,7 @@ int main() {
                     }
 
                     std::string transportTypeString;
-                    std::cout << "Digite o tipo do transporte: ";
+                    std::cout << "Digite o tipo do transporte (GROUND or WATER): ";
                     std::getline(std::cin, transportTypeString);
                     TransportTypeEnum transportType = stringToTransportType(transportTypeString);
 
@@ -143,25 +143,52 @@ int main() {
 
                     break;
                 }
-            case 3:
+             case 3:
                 {
                     std::string passengerName;
+                    std::string cityName;
 
+                    // Get the passenger's name
                     std::cout << "Digite o nome do passageiro: ";
                     std::getline(std::cin, passengerName);
 
+                    // Check if the passenger's name is empty
                     if (passengerName.empty()) {
                         std::cerr << "Erro: O nome do passageiro não pode ser vazio." << std::endl;
                         break;
                     }
 
+                    // Get the name of the origin city
+                    std::cout << "Digite o nome da cidade de origem: ";
+                    std::getline(std::cin, cityName);
+
+                    // Check if the city name is empty
+                    if (cityName.empty()) {
+                        std::cerr << "Erro: O nome da cidade de origem não pode ser vazio." << std::endl;
+                        break;
+                    }
+
+                    // Find the passenger by name in the database
                     Passenger* passenger = findPassengerByName(db, passengerName);
                     if (passenger != nullptr) {
                         std::cout << "O passageiro \"" << passengerName << "\" já está cadastrado no banco de dados." << std::endl;
                     } else {
-                        if (addPassengerInPassengers(db, passengerName)) {
+                        // Find the city by name in the database
+                        City* cityPtr = findCityByName(db, cityName);
+                        if (cityPtr == nullptr) {
+                            std::cerr << "Erro: A cidade de origem \"" << cityName << "\" não foi encontrada no banco de dados." << std::endl;
+                            break;
+                        }
+
+                        // Dereference the pointer to get the City object
+                        City originCity = *cityPtr;
+
+                        // Add the passenger along with the origin city
+                        if (addPassengerInPassengers(db, passengerName, originCity.getCityName())) {
                             std::cout << "Passageiro cadastrado com sucesso!" << std::endl;
-                        } 
+                        } else {
+                            std::cerr << "Erro ao cadastrar o passageiro." << std::endl;
+                        }
                     }
 
                     break;
@@ -213,6 +240,7 @@ int main() {
 
                     std:: cout << "Digite a distância da rota: (em km) ";
                     std::cin >> routeDistance;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
                     if(routeDistance < 0){
                         std::cout << "Distância inválida." << std::endl;
@@ -230,12 +258,12 @@ int main() {
                     std::string originCity;
                     std::string destinationCity;
                     std::string transportName;
-                    std::list<Passenger*> passagers;
+                    std::list<Passenger*> passengers;
 
                     std::cout << "Digite a cidade de origem: ";
                     std::getline(std::cin, originCity);
                     City* possibleOriginCity = findCityByName(db, originCity);
-                    if(possibleOriginCity == nullptr){
+                    if (possibleOriginCity == nullptr) {
                         std::cout << "Cidade " << originCity << " não existe." << std::endl;
                         break;
                     }
@@ -243,7 +271,7 @@ int main() {
                     std::cout << "Digite a cidade de destino: ";
                     std::getline(std::cin, destinationCity);
                     City* possibleDestinationCity = findCityByName(db, destinationCity);
-                    if(possibleDestinationCity == nullptr){
+                    if (possibleDestinationCity == nullptr) {
                         std::cout << "Cidade " << destinationCity << " não existe." << std::endl;
                         break;
                     }
@@ -251,36 +279,33 @@ int main() {
                     std::cout << "Digite o nome do transporte: ";
                     std::getline(std::cin, transportName);
                     Transport* possibleTransport = findTransportByName(db, transportName);
-                    if(possibleTransport == nullptr){
+                    if (possibleTransport == nullptr) {
                         std::cout << "Transporte " << transportName << " não existe." << std::endl;
                         break;
                     }
-                    
-                    possibleTransport->setCurrentPlace(possibleOriginCity); //temporario
+
+                    possibleTransport->setCurrentPlace(possibleOriginCity); // Temporário para ajustar a localização
 
                     int opt = 1;
-                    while(opt!=0) {
+                    while (opt != 0) {
                         std::cout << "0 - Se deseja parar de adicionar passageiros" << std::endl;
                         std::cout << "1 - Se deseja adicionar um passageiro" << std::endl;
                         std::cin >> opt;
                         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                        switch (opt)
-                        {
+                        switch (opt) {
                             case 0:
-                            {
                                 break;
-                            }
                             case 1:
                             {
                                 std::string passengerName;
                                 std::cout << "Digite o nome do passageiro: ";
                                 std::getline(std::cin, passengerName);
                                 Passenger* passenger = findPassengerByName(db, passengerName);
-                                if(passenger == nullptr){
+                                if (passenger == nullptr) {
                                     std::cout << "Passageiro " << passengerName << " não existe." << std::endl;
                                     break;
                                 } else {
-                                    passagers.push_back(passenger);
+                                    passengers.push_back(passenger);
                                     std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
                                     std::cout << "Pressione Enter para continuar...";
                                     getchar();
@@ -294,39 +319,183 @@ int main() {
                         }
                     }
 
-                    if(possibleTransport->getCurrentPlace()->getCityName() != originCity){
+                    if (possibleTransport->getCurrentPlace()->getCityName() != originCity) {
                         std::cout << "O transporte " << transportName << " não está na cidade de origem." << std::endl;
                         break;
                     }
 
                     std::vector<std::string> path = g.CityGraph::findShortestPath(originCity, destinationCity);
+                    double totalDuration = 0.0;
 
                     if (!path.empty()) {
                         for (int i = 0; i < path.size() - 1; i++) {
                             std::string start = path[i];
                             std::string end = path[i + 1];
                             Route* route = findRouteByCities(db, start, end);
-                            if(route == nullptr){
+                            if (route == nullptr) {
                                 std::cout << "Erro no sistema! Não existe trajeto entre " << start << " e " << end << std::endl;
                                 break;
                             }
                             double duration = route->getDistance() / possibleTransport->getSpeed();
-                            addTripInTrips(db, transportName, start, end, duration, passagers);
+                            totalDuration += duration;
+                            addTripInTrips(db, transportName, start, end, duration, passengers, false); // Cria a viagem inicialmente com trip_in_progress = false
                         }
-                        //avançar horas: systemHours += duration
+                        std::cout << "A viagem levará um total de " << totalDuration << " horas." << std::endl;
                     } else {
                         std::cout << "Não existe trajeto entre " << originCity << " e " << destinationCity << std::endl;
                         break;
                     }
 
-                    for (Passenger* passenger : passagers) {
+                    for (Passenger* passenger : passengers) {
                         passenger->setCurrentLocation(*possibleDestinationCity);
                         editPassengerInPassengers(db, *passenger);
                     }
 
-                    possibleTransport->setCurrentPlace(possibleDestinationCity);
+                    //possibleTransport->setCurrentPlace(possibleDestinationCity);
+                    
                     editTransportInTransports(db, *possibleTransport);
 
+                    // Atualiza o status do transporte para indicar que está em viagem
+                    possibleTransport->setTripStatus(true, totalDuration); // Atualiza o status do transporte para em viagem
+
+                    // Atualiza a viagem para marcar como em andamento
+                    int tripId = sqlite3_last_insert_rowid(db); // Captura o ID da viagem recém-criada
+                    if (!updateTripInProgress(db, tripId, true)) {
+                        std::cerr << "Erro ao atualizar a viagem para 'em andamento'." << std::endl;
+                    }
+
+                    break;
+                }
+
+
+           case 6:
+                {
+                    int hoursToAdvance;
+                    std::cout << "Digite a quantidade de horas para avançar: ";
+                    std::cin >> hoursToAdvance;
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                    if (advanceHours(db, hoursToAdvance)) {
+                        std::cout << "Horas avançadas com sucesso." << std::endl;
+                    } else {
+                        std::cout << "Erro ao avançar as horas." << std::endl;
+                    }
+
+                    break;
+                }
+
+            case 7:
+                {
+                    std::list<Trip*> trips = listTripsInProgress(db);
+
+                    if(trips.empty()) {
+                        std::cout << "Não há viagens em andamento." << std::endl;
+                    } else {
+                        for(Trip* trip : trips) {
+                            if (trip == nullptr) {
+                                std::cerr << "Erro: Ponteiro de Trip nulo encontrado." << std::endl;
+                                continue;
+                            }
+
+                            City* origin = trip->getOrigin();
+                            City* destination = trip->getDestination();
+                            Transport* transport = trip->getTransport();
+
+                            if (origin == nullptr || destination == nullptr || transport == nullptr) {
+                                std::cerr << "Erro: Ponteiro nulo encontrado em Trip." << std::endl;
+                                continue;
+                            }
+
+                            std::cout << "======================================" << std::endl;
+                            std::cout << "Viagem ID: " << trip->getId() << std::endl;
+                            std::cout << "Origem: " << origin->getCityName() << std::endl;
+                            std::cout << "Destino: " << destination->getCityName() << std::endl;
+                            std::cout << "Transporte: " << transport->getTransportName() << std::endl;
+                            std::cout << "Duração: " << trip->getHoursInRoute() << " horas" << std::endl;
+                            std::cout << "Passageiros: ";
+                            
+                            std::list<Passenger*> passengers = trip->getPassengers();
+                            for(Passenger* passenger : passengers) {
+                                if (passenger != nullptr) {
+                                    std::cout << passenger->getName() << " ";
+                                } else {
+                                    std::cerr << "Erro: Passageiro nulo encontrado." << std::endl;
+                                }
+                            }
+                            std::cout << std::endl;
+                            std::cout << "======================================" << std::endl;
+                        }
+                    }
+
+                    // Limpeza dos objetos Trip após o uso
+                    for (Trip* trip : trips) {
+                        delete trip; // Certifique-se de que Trip foi alocado com `new` e não é gerenciado por outro lugar
+                    }
+
+                    break;
+                }
+            case 8:
+                {
+                    std::list<Passenger*> passengers = findAllPassengers(db);
+                    if(passengers.empty()) {
+                        std::cout << "Não há passageiros cadastrados." << std::endl;
+                    } else {
+                        for(Passenger* passenger : passengers) {
+                            std::cout << "======================================" << std::endl;
+                            std::cout << "Nome: " << passenger->getName() << std::endl;
+                            std::cout << "Localização Atual: " << passenger->getCurrentLocation().getCityName() << std::endl;
+                            std::cout << "======================================" << std::endl;
+                        }
+                    }
+                    break;
+                }
+            case 9:
+                {
+                    std::list<Transport*> transports = findAllTransports(db);
+                    if (transports.empty()) {
+                        std::cout << "Não há transportes cadastrados." << std::endl;
+                    } else {
+                        for (Transport* transport : transports) {
+                            std::cout << "======================================" << std::endl;
+                            std::cout << "Nome: " << transport->getTransportName() << std::endl;
+                            std::cout << "Tipo: " << transportTypeToString(transport->getTransportType()) << std::endl;
+                            std::cout << "Capacidade: " << transport->getCapacity() << std::endl;
+                            std::cout << "Velocidade: " << transport->getSpeed() << " km/h" << std::endl;
+
+                            if (transport->isInTrip() && transport->getHoursRemaining() > 0) {
+                                std::cout << "Localização Atual: No caminho" << std::endl;
+                            } else if (!transport->isInTrip() && transport->getCurrentPlace() != nullptr) {
+                                std::cout << "Localização Atual: " << transport->getCurrentPlace()->getCityName() << std::endl;
+                            }
+
+                            std::cout << "======================================" << std::endl;
+                        }
+                    }
+                    break;
+                }
+
+            case 10: 
+                {
+                    std::unordered_map<std::string, int> cityFrequency = findMostFrequentCities(db);
+                    if(cityFrequency.empty()) {
+                        std::cout << "Nenhuma cidade foi visitada." << std::endl;
+                    } else {
+                        std::cout << "Cidades mais frequentadas:" << std::endl;
+                        for(auto const& pair : cityFrequency) {
+                            std::cout << "Cidade: " << pair.first << " - Visitas: " << pair.second << std::endl;
+                        }
+                    }
+                    break;
+                }
+            case 11:
+                {
+                    std::list<City> cities;
+                    if(listCityInCities(db, cities)){
+                        std::cout << "Cidades cadastradas:" << std::endl;
+                        for(City city : cities){
+                            std::cout << city.getCityName() << std::endl;
+                        }
+                    }
                     break;
                 }
             default:

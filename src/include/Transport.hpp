@@ -27,6 +27,9 @@ private:
     float currentRestTime;                  ///< Tempo atual de descanso em horas
     City* currentPlace;                     ///< Cidade onde o transporte está localizado
 
+    bool tripInProgress;                    ///< Indica se o transporte está em uma viagem
+    double hoursRemaining;                  ///< Horas restantes na viagem atual
+
 public:
     /**
      * @brief Construtor para inicializar um transporte.
@@ -96,6 +99,24 @@ public:
      */
     void setCurrentPlace(City* place);
 
+    /**
+     * @brief Verifica se o transporte está em viagem.
+     * @return Verdadeiro se o transporte está em viagem, falso caso contrário.
+     */
+    bool isInTrip() const;
+
+    /**
+     * @brief Obtém o tempo restante da viagem atual.
+     * @return Horas restantes na viagem atual.
+     */
+    double getHoursRemaining() const;
+
+    /**
+     * @brief Define se o transporte está em viagem e as horas restantes.
+     * @param inProgress Verdadeiro se a viagem está em progresso, falso caso contrário.
+     * @param hours Horas restantes na viagem atual.
+     */
+    void setTripStatus(bool inProgress, double hours);
 };
 
 #endif // TRANSPORT_HPP

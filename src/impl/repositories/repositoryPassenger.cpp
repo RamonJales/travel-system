@@ -19,10 +19,10 @@ void createTablePassengers(sqlite3* db) {
     }
 }
 
-bool addPassengerInPassengers(sqlite3* db, const std::string& passengerName) {
+bool addPassengerInPassengers(sqlite3* db, const std::string& passengerName, const std::string& cityName) {
     const char* sql_insert = R"(
         INSERT INTO passengers (name, current_location)
-        VALUES (?, NULL);
+        VALUES (?, ?);
     )";
 
     sqlite3_stmt* stmt;
@@ -32,7 +32,10 @@ bool addPassengerInPassengers(sqlite3* db, const std::string& passengerName) {
         return false;
     }
 
+    // Bind the passenger name to the first placeholder
     sqlite3_bind_text(stmt, 1, passengerName.c_str(), -1, SQLITE_STATIC);
+    // Bind the city name to the second placeholder
+    sqlite3_bind_text(stmt, 2, cityName.c_str(), -1, SQLITE_STATIC);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
@@ -44,6 +47,7 @@ bool addPassengerInPassengers(sqlite3* db, const std::string& passengerName) {
     sqlite3_finalize(stmt);
     return true;
 }
+
 
 Passenger* findPassengerByName(sqlite3* db, const std::string& passengerName) {
     const char* sql_select = "SELECT name, current_location FROM passengers WHERE name = ?;";
@@ -174,4 +178,37 @@ bool listPassengerInPassengers(sqlite3* db, std::list<Passenger>& passengers) {
 
     sqlite3_finalize(stmt);
     return true;
+}
+
+
+std::list<Passenger*> findAllPassengers(sqlite3* db) {
+    std::list<Passenger*> passengers;
+
+    const char* sql_select_all = R"(
+        SELECT id, name, current_location FROM passengers;
+    )";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql_select_all, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
+        return passengers;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        std::string cityName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
+
+        // Assuming findCityByName is a function that retrieves a City object by its name.
+        City* cityPtr = findCityByName(db, cityName);
+        City currentLocation = cityPtr != nullptr ? *cityPtr : City();
+
+        // Create a Passenger object and add it to the list
+        Passenger* passenger = new Passenger(name, currentLocation);
+        passenger->setId(id);  // Set the passenger's ID
+        passengers.push_back(passenger);
+    }
+
+    sqlite3_finalize(stmt);
+    return passengers;
 }
