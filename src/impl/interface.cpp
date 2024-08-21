@@ -15,8 +15,10 @@ void print_menu() {
     std::cout << "6. Avançar horas" << std::endl;
     std::cout << "7. Relatar todas as viagens em andamento" << std::endl;
     std::cout << "8. Relatar todas as pessoas" << std::endl;
-    std::cout << "9. Relatar todas os transportes" << std::endl;
+    std::cout << "9. Relatar todos os transportes" << std::endl;
     std::cout << "10. Relatar as cidades mais frequentadas" << std::endl;
+    std::cout << "11. Relatar as cidades" << std::endl;
+    std::cout << "12. Relatar todas as viagens finalizadas" << std::endl;
     std::cout << "0. Sair" << std::endl;
     std::cout << "======================================" << std::endl;
 }

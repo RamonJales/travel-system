@@ -424,3 +424,4 @@ bool advanceHours(sqlite3* db, double hours) {
 
     return true;
 }
+

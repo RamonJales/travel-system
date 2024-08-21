@@ -498,6 +498,41 @@ int main() {
                     }
                     break;
                 }
+            case 12:
+                {
+                    std::list<Trip*> finishedTrips = listTripInTrips(db);
+
+                    if(finishedTrips.empty()) {
+                        std::cout << "Não há viagens finalizadas." << std::endl;
+                    } else {
+                        for(Trip* trip : finishedTrips) {
+                            if (trip == nullptr) {
+                                std::cerr << "Erro: Ponteiro de Trip nulo encontrado." << std::endl;
+                                continue;
+                            }
+
+                            City* origin = trip->getOrigin();
+                            City* destination = trip->getDestination();
+                            Transport* transport = trip->getTransport();
+
+                            if (origin == nullptr || destination == nullptr || transport == nullptr) {
+                                std::cerr << "Erro: Ponteiro nulo encontrado em Trip." << std::endl;
+                                continue;
+                            }
+
+                            std::cout << "======================================" << std::endl;
+                            std::cout << "Viagem ID: " << trip->getId() << std::endl;
+                            std::cout << "Origem: " << origin->getCityName() << std::endl;
+                            std::cout << "Destino: " << destination->getCityName() << std::endl;
+                            std::cout << "Transporte: " << transport->getTransportName() << std::endl;
+                            std::cout << "Duração: " << trip->getHoursInRoute() << " horas" << std::endl;
+                            std::cout << "======================================" << std::endl;
+                        }
+                    }
+
+                    break;
+                }
+
             default:
                 if(option != 0) {
                     std::cout << "Escolha inválida. Por favor, tente novamente." << std::endl;
