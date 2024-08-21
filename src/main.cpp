@@ -386,6 +386,76 @@ int main() {
 
             case 7:
                 {
+                    std::list<Transport*> transports = findAllTransports(db);
+                    if (transports.empty()) {
+                        std::cout << "Não há transportes cadastrados." << std::endl;
+                    } else {
+                        for (Transport* transport : transports) {
+                            std::cout << "======================================" << std::endl;
+                            std::cout << "Nome: " << transport->getTransportName() << std::endl;
+                            std::cout << "Tipo: " << transportTypeToString(transport->getTransportType()) << std::endl;
+                            std::cout << "Capacidade: " << transport->getCapacity() << std::endl;
+                            std::cout << "Velocidade: " << transport->getSpeed() << " km/h" << std::endl;
+
+                            if (transport->isInTrip() && transport->getHoursRemaining() > 0) {
+                                std::cout << "Localização Atual: No caminho" << std::endl;
+                            } else if (!transport->isInTrip() && transport->getCurrentPlace() != nullptr) {
+                                std::cout << "Localização Atual: " << transport->getCurrentPlace()->getCityName() << std::endl;
+                            }
+
+                            std::cout << "======================================" << std::endl;
+                        }
+                    }
+                    break;
+                }
+
+            
+            case 8:
+                {
+                    std::list<Passenger*> passengers = findAllPassengers(db);
+                    if(passengers.empty()) {
+                        std::cout << "Não há passageiros cadastrados." << std::endl;
+                    } else {
+                        for(Passenger* passenger : passengers) {
+                            std::cout << "======================================" << std::endl;
+                            std::cout << "Nome: " << passenger->getName() << std::endl;
+                            std::cout << "Localização Atual: " << passenger->getCurrentLocation().getCityName() << std::endl;
+                            std::cout << "======================================" << std::endl;
+                        }
+                    }
+                    break;
+                }
+            
+            case 9:
+                {
+                    std::list<City> cities;
+                    if(listCityInCities(db, cities)){
+                        if (!cities.empty()) {
+                            std::cout << "Cidades cadastradas:" << std::endl;
+                            for (const City& city : cities) {
+                                std::cout << city.getCityName() << std::endl;
+                            }
+                        } else {
+                            std::cout << "Não há cidades cadastradas." << std::endl;
+                        }
+                    }
+                    break;
+                }
+            case 10: 
+                {   
+                    std::list<City> cities;
+                    if (listCityInCities(db, cities)) {
+                        if (cities.empty()) {
+                            std::cout << "Não há cidades cadastradas." << std::endl;
+                        } else {
+                            findMostFrequentCities(db); 
+                        }
+                    }
+                    break;
+                }
+            
+            case 11:
+                {
                     std::list<Trip*> trips = listTripsInProgress(db);
 
                     if(trips.empty()) {
@@ -432,70 +502,6 @@ int main() {
                         delete trip; // Certifique-se de que Trip foi alocado com `new` e não é gerenciado por outro lugar
                     }
 
-                    break;
-                }
-            case 8:
-                {
-                    std::list<Passenger*> passengers = findAllPassengers(db);
-                    if(passengers.empty()) {
-                        std::cout << "Não há passageiros cadastrados." << std::endl;
-                    } else {
-                        for(Passenger* passenger : passengers) {
-                            std::cout << "======================================" << std::endl;
-                            std::cout << "Nome: " << passenger->getName() << std::endl;
-                            std::cout << "Localização Atual: " << passenger->getCurrentLocation().getCityName() << std::endl;
-                            std::cout << "======================================" << std::endl;
-                        }
-                    }
-                    break;
-                }
-            case 9:
-                {
-                    std::list<Transport*> transports = findAllTransports(db);
-                    if (transports.empty()) {
-                        std::cout << "Não há transportes cadastrados." << std::endl;
-                    } else {
-                        for (Transport* transport : transports) {
-                            std::cout << "======================================" << std::endl;
-                            std::cout << "Nome: " << transport->getTransportName() << std::endl;
-                            std::cout << "Tipo: " << transportTypeToString(transport->getTransportType()) << std::endl;
-                            std::cout << "Capacidade: " << transport->getCapacity() << std::endl;
-                            std::cout << "Velocidade: " << transport->getSpeed() << " km/h" << std::endl;
-
-                            if (transport->isInTrip() && transport->getHoursRemaining() > 0) {
-                                std::cout << "Localização Atual: No caminho" << std::endl;
-                            } else if (!transport->isInTrip() && transport->getCurrentPlace() != nullptr) {
-                                std::cout << "Localização Atual: " << transport->getCurrentPlace()->getCityName() << std::endl;
-                            }
-
-                            std::cout << "======================================" << std::endl;
-                        }
-                    }
-                    break;
-                }
-
-            case 10: 
-                {
-                    std::unordered_map<std::string, int> cityFrequency = findMostFrequentCities(db);
-                    if(cityFrequency.empty()) {
-                        std::cout << "Nenhuma cidade foi visitada." << std::endl;
-                    } else {
-                        std::cout << "Cidades mais frequentadas:" << std::endl;
-                        for(auto const& pair : cityFrequency) {
-                            std::cout << "Cidade: " << pair.first << " - Visitas: " << pair.second << std::endl;
-                        }
-                    }
-                    break;
-                }
-            case 11:
-                {
-                    std::list<City> cities;
-                    if(listCityInCities(db, cities)){
-                        std::cout << "Cidades cadastradas:" << std::endl;
-                        for(City city : cities){
-                            std::cout << city.getCityName() << std::endl;
-                        }
-                    }
                     break;
                 }
             case 12:

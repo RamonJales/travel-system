@@ -1,11 +1,11 @@
 #include "../../include/repositories/repositoryCity.hpp"
-#include <unordered_map>
 
 void createTableCities(sqlite3* db) {
     const char* sql_create = R"(
         CREATE TABLE IF NOT EXISTS cities (
             id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE
+            name TEXT NOT NULL UNIQUE,
+            visits INTEGER DEFAULT 0
         );
     )";
 
@@ -171,25 +171,51 @@ bool listCityInCities(sqlite3* db, std::list<City>& cities) {
     return true;
 }
 
-std::unordered_map<std::string, int> findMostFrequentCities(sqlite3* db) {
-    std::unordered_map<std::string, int> cityFrequency;
+void incrementCityVisit(sqlite3* db, const std::string& cityName) {
+    const char* sql_increment = R"(
+        UPDATE cities
+        SET visits = visits + 1
+        WHERE name = ?;
+    )";
+
     sqlite3_stmt* stmt;
-    const char* sql = 
-        "SELECT name, COUNT(*) AS visits "
-        "FROM trips "
-        "JOIN cities ON destination_city_name  = cities.id "
-        "GROUP BY name";
-    
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            std::string city = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-            int count = sqlite3_column_int(stmt, 1);
-            cityFrequency[city] = count;
+    if (sqlite3_prepare_v2(db, sql_increment, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, cityName.c_str(), -1, SQLITE_STATIC);
+        
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
+            std::cerr << "Erro ao aumentar as visitas: "<< sqlite3_errmsg(db) << std::endl;
         }
     } else {
-        std::cerr << "Failed to execute query: " << sqlite3_errmsg(db) << std::endl;
+        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
     }
-
+    
     sqlite3_finalize(stmt);
-    return cityFrequency;
+}
+
+#include <iostream>
+#include <sqlite3.h>
+
+void findMostFrequentCities(sqlite3* db) {
+    const char* sql_query = R"(
+        SELECT name, visits
+        FROM cities
+        ORDER BY visits DESC
+        LIMIT 5;
+    )";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql_query, -1, &stmt, nullptr) == SQLITE_OK) {
+        std::cout << "Cidades mais frequentadas:\n";
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+                
+            std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            int visits = sqlite3_column_int(stmt, 1);
+
+            std::cout << "Cidade: " << name << " | Visitas: " << visits << std::endl;
+        }
+    } else {
+        std::cerr << "Erro ao preparar consulta: "<< sqlite3_errmsg(db) << std::endl;
+    }
+    
+    sqlite3_finalize(stmt);
 }
