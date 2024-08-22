@@ -43,6 +43,8 @@ public:
     Trip* getNextTrip() const;
     double getHoursInRoute() const;
     bool isTripInProgress() const;
+    double getTotalHours() const;
+
 
     // Setters
     void setId(int tripId);

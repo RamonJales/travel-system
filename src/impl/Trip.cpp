@@ -90,6 +90,11 @@ void Trip::endTrip() {
     this->tripInProgress = false;
 }
 
+double Trip::getTotalHours() const {
+    return hoursInRoute + (transport ? transport->getRestTime() : 0);
+}
+
+
 void reportOngoingTrips(const std::list<Trip*>& trips) {
     for (const Trip* trip : trips) {
         std::cout << "Viagem ID: " << trip->getId() << std::endl;
