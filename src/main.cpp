@@ -260,7 +260,6 @@ int main() {
                     std::string transportName;
                     std::list<Passenger*> passengers;
 
-                    // Solicita a cidade de origem
                     std::cout << "Digite a cidade de origem: ";
                     std::getline(std::cin, originCity);
                     City* possibleOriginCity = findCityByName(db, originCity);
@@ -269,7 +268,6 @@ int main() {
                         break;
                     }
 
-                    // Solicita a cidade de destino
                     std::cout << "Digite a cidade de destino: ";
                     std::getline(std::cin, destinationCity);
                     City* possibleDestinationCity = findCityByName(db, destinationCity);
@@ -278,7 +276,6 @@ int main() {
                         break;
                     }
 
-                    // Solicita o nome do transporte
                     std::cout << "Digite o nome do transporte: ";
                     std::getline(std::cin, transportName);
                     Transport* possibleTransport = findTransportByName(db, transportName);
@@ -287,13 +284,11 @@ int main() {
                         break;
                     }
 
-                    // Verifica se o transporte está na cidade de origem
                     if (possibleTransport->getCurrentPlace()->getCityName() != originCity) {
                         std::cout << "O transporte " << transportName << " não está na cidade de origem." << std::endl;
                         break;
                     }
 
-                    // Adiciona passageiros à lista
                     int opt = 1;
                     while (opt != 0) {
                         std::cout << "0 - Parar de adicionar passageiros" << std::endl;
@@ -317,7 +312,6 @@ int main() {
                         }
                     }
 
-                    // Encontra o caminho mais curto entre a origem e o destino
                     std::vector<std::string> path = g.CityGraph::findShortestPath(originCity, destinationCity);
                     double totalDuration = 0.0;
                     int tripId = -1;
@@ -336,12 +330,10 @@ int main() {
                             double duration = routeDistance / possibleTransport->getSpeed();
                             totalDuration += duration;
 
-                            // Adiciona o tempo de descanso do transporte se necessário
                             if (routeDistance >= possibleTransport->getDistanceBetweenRest()) {
                                 totalDuration += possibleTransport->getRestTime();
                             }
                            
-                            // Cria a viagem no banco de dados com trip_in_progress = false
                             tripId = addTripInTrips(db, transportName, start, end, totalDuration, passengers, false);
                         }
                         std::cout << "A viagem levará um total de " << totalDuration << " horas." << std::endl;
@@ -350,7 +342,6 @@ int main() {
                         break;
                     }
 
-                    // Atualiza a viagem para marcar como em andamento
                     if (tripId != -1) {
                         bool updateTrip = updateTripInProgress(db, tripId, true);
                         if (!updateTrip) {
@@ -358,7 +349,6 @@ int main() {
                         }
                     }
 
-                    // Atualiza o status do transporte para em viagem
                     possibleTransport->setTransportStatus(true, totalDuration);
                     editTransportInTransports(db, *possibleTransport);
 
