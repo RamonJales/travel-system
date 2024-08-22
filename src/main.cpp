@@ -330,13 +330,13 @@ int main() {
                             double duration = routeDistance / possibleTransport->getSpeed();
                             totalDuration += duration;
 
-                            if (routeDistance >= possibleTransport->getDistanceBetweenRest()) {
-                                totalDuration += possibleTransport->getRestTime();
-                            }
+                            // if (routeDistance >= possibleTransport->getDistanceBetweenRest()) {
+                            //     totalDuration += possibleTransport->getRestTime();
+                            // }
                            
                             tripId = addTripInTrips(db, transportName, start, end, totalDuration, passengers, false);
                         }
-                        std::cout << "A viagem levará um total de " << totalDuration << " horas." << std::endl;
+                        std::cout << "A viagem levará um total de " << (totalDuration + possibleTransport->getRestTime()) << " horas." << std::endl;
                     } else {
                         std::cout << "Não existe trajeto entre " << originCity << " e " << destinationCity << std::endl;
                         break;

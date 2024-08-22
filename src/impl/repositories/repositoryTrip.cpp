@@ -353,7 +353,6 @@ std::list<Trip*> listTripsInProgress(sqlite3* db) {
 }
 
 bool advanceHours(sqlite3* db, double hours) {
-    // Lista todas as viagens em progresso
     std::list<Trip*> tripsInProgress = listTripsInProgress(db);
 
     if (tripsInProgress.empty()) {
@@ -373,29 +372,27 @@ bool advanceHours(sqlite3* db, double hours) {
 
         Route* route;
         double routeDistance = route->getDistance();
+        double speed = transport->getSpeed();
 
-        double newHoursInRoute = trip->getHoursInRoute() - hours;
-        double totalDistanceCovered = routeDistance - newHoursInRoute * transport->getSpeed(); // Calcula a distância já percorrida
-        double remainingDistance = routeDistance - totalDistanceCovered;
+        // Calcula o tempo necessário para concluir a viagem (sem considerar descansos)
+        double timeToCompleteTrip = routeDistance / speed;
 
-        if (totalDistanceCovered >= distanceBetweenRest) {
+        // Verifica se a viagem atinge o ponto de descanso
+        bool needsRest = (routeDistance >= distanceBetweenRest);
+
+        double totalTripHours = timeToCompleteTrip;
+
+        if (needsRest && distanceBetweenRest <= (timeToCompleteTrip * speed)) {
+            // O transporte precisa descansar
+            totalTripHours += restTime;
             std::cout << "O transporte entrou em descanso após percorrer " << distanceBetweenRest << " km." << std::endl;
-            newHoursInRoute += restTime; 
-            transport->setRestTime(0); 
-            totalDistanceCovered = 0;
         }
 
-        
-        if (newHoursInRoute < 0) {
-            newHoursInRoute = 0;
-        }
+        double newHoursInRoute = trip->getHoursInRoute() + hours;
 
-        double totalTripHours = newHoursInRoute + restTime;
-
-        std::cout << "Horas restantes para a viagem ID " << trip->getId() << ": " << totalTripHours << std::endl;
-
-        if (remainingDistance <= 0) {
-            totalTripHours = 0;
+        // Se as horas avançadas superam o tempo necessário, o total de horas na rota é ajustado
+        if (newHoursInRoute >= totalTripHours) {
+            newHoursInRoute = totalTripHours;
             trip->setTripInProgress(false);
             std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
                       << " para " << trip->getDestination()->getCityName() 
@@ -410,8 +407,8 @@ bool advanceHours(sqlite3* db, double hours) {
                       << " para " << trip->getDestination()->getCityName() 
                       << " em andamento." << std::endl;
             
-            transport->setHoursRemaining(totalTripHours);
-            transport->setTransportStatus(true, totalTripHours);
+            transport->setHoursRemaining(totalTripHours - newHoursInRoute);
+            transport->setTransportStatus(true, totalTripHours - newHoursInRoute);
             editTransportInTransports(db, *transport);
         }
 
