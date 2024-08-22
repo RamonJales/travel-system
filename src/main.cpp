@@ -326,6 +326,7 @@ int main() {
 
                     std::vector<std::string> path = g.CityGraph::findShortestPath(originCity, destinationCity);
                     double totalDuration = 0.0;
+                    int tripId = -1;
 
                     if (!path.empty()) {
                         for (int i = 0; i < path.size() - 1; i++) {
@@ -338,31 +339,28 @@ int main() {
                             }
                             double duration = route->getDistance() / possibleTransport->getSpeed();
                             totalDuration += duration;
-                            addTripInTrips(db, transportName, start, end, duration, passengers, false); // Cria a viagem inicialmente com trip_in_progress = false
+                            tripId = addTripInTrips(db, transportName, start, end, duration, passengers, false); // Cria a viagem inicialmente com trip_in_progress = false
                         }
                         std::cout << "A viagem levará um total de " << totalDuration << " horas." << std::endl;
                     } else {
                         std::cout << "Não existe trajeto entre " << originCity << " e " << destinationCity << std::endl;
                         break;
                     }
+                
 
-                    for (Passenger* passenger : passengers) {
-                        passenger->setCurrentLocation(*possibleDestinationCity);
-                        editPassengerInPassengers(db, *passenger);
+                    // Atualiza a viagem para marcar como em andamento
+                    if(tripId != -1){
+                        bool updateTrip = updateTripInProgress(db, tripId, true);
+                        if (!updateTrip) {
+                            std::cerr << "Erro ao atualizar a viagem para 'em andamento'." << std::endl;
+                        }
+                    } else {
+                        break;
                     }
-
-                    //possibleTransport->setCurrentPlace(possibleDestinationCity);
-                    
-                    editTransportInTransports(db, *possibleTransport);
 
                     // Atualiza o status do transporte para indicar que está em viagem
                     possibleTransport->setTripStatus(true, totalDuration); // Atualiza o status do transporte para em viagem
-
-                    // Atualiza a viagem para marcar como em andamento
-                    int tripId = sqlite3_last_insert_rowid(db); // Captura o ID da viagem recém-criada
-                    if (!updateTripInProgress(db, tripId, true)) {
-                        std::cerr << "Erro ao atualizar a viagem para 'em andamento'." << std::endl;
-                    }
+                    editTransportInTransports(db, *possibleTransport);
 
                     break;
                 }
@@ -485,12 +483,17 @@ int main() {
                             std::cout << "Passageiros: ";
                             
                             std::list<Passenger*> passengers = trip->getPassengers();
+                            int countForNames = 0;
                             for(Passenger* passenger : passengers) {
                                 if (passenger != nullptr) {
-                                    std::cout << passenger->getName() << " ";
+                                    if(countForNames > 0){
+                                        std::cout << ", ";
+                                    }
+                                    std::cout << passenger->getName();
                                 } else {
                                     std::cerr << "Erro: Passageiro nulo encontrado." << std::endl;
                                 }
+                                countForNames++;
                             }
                             std::cout << std::endl;
                             std::cout << "======================================" << std::endl;
@@ -516,23 +519,25 @@ int main() {
                                 std::cerr << "Erro: Ponteiro de Trip nulo encontrado." << std::endl;
                                 continue;
                             }
+                            if(!(trip->isTripInProgress())){
+                                City* origin = trip->getOrigin();
+                                City* destination = trip->getDestination();
+                                Transport* transport = trip->getTransport();
 
-                            City* origin = trip->getOrigin();
-                            City* destination = trip->getDestination();
-                            Transport* transport = trip->getTransport();
+                                if (origin == nullptr || destination == nullptr || transport == nullptr) {
+                                    std::cerr << "Erro: Ponteiro nulo encontrado em Trip." << std::endl;
+                                    continue;
+                                }
 
-                            if (origin == nullptr || destination == nullptr || transport == nullptr) {
-                                std::cerr << "Erro: Ponteiro nulo encontrado em Trip." << std::endl;
-                                continue;
+                                std::cout << "======================================" << std::endl;
+                                std::cout << "Viagem ID: " << trip->getId() << std::endl;
+                                std::cout << "Origem: " << origin->getCityName() << std::endl;
+                                std::cout << "Destino: " << destination->getCityName() << std::endl;
+                                std::cout << "Transporte: " << transport->getTransportName() << std::endl;
+                                std::cout << "Duração: " << trip->getHoursInRoute() << " horas" << std::endl;
+                                std::cout << "======================================" << std::endl;
                             }
 
-                            std::cout << "======================================" << std::endl;
-                            std::cout << "Viagem ID: " << trip->getId() << std::endl;
-                            std::cout << "Origem: " << origin->getCityName() << std::endl;
-                            std::cout << "Destino: " << destination->getCityName() << std::endl;
-                            std::cout << "Transporte: " << transport->getTransportName() << std::endl;
-                            std::cout << "Duração: " << trip->getHoursInRoute() << " horas" << std::endl;
-                            std::cout << "======================================" << std::endl;
                         }
                     }
 
