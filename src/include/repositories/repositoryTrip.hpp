@@ -3,6 +3,7 @@
 
 #include "../../../sqlite3/sqlite3.h"
 #include "../Trip.hpp"
+#include "../Route.hpp"
 #include "./repositoryCity.hpp"
 #include "./repositoryPassenger.hpp"
 #include "./repositoryTransport.hpp"
@@ -22,4 +23,7 @@ bool updateTripInProgress(sqlite3* db, int tripId, bool inProgress);
 std::list<Trip*> listTripInTrips(sqlite3* db);
 std::list<Trip*> listTripsInProgress(sqlite3* db);
 bool advanceHours(sqlite3* db, double hours);
+int getTransportIdByTripId(sqlite3* db, int tripId);
+bool updateTransportInProgress(sqlite3* db, int transportId, bool inProgress, double hoursRemaining);
+
 #endif

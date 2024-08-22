@@ -367,25 +367,49 @@ bool advanceHours(sqlite3* db, double hours) {
             continue;
         }
 
-        double newHoursInRoute = trip->getHoursInRoute() - hours;
-        std::cout << "Horas restantes para a viagem ID " << trip->getId() << ": " << newHoursInRoute << std::endl;
+        Transport* transport = trip->getTransport();
+        double restTime = transport->getRestTime(); 
+        double distanceBetweenRest = transport->getDistanceBetweenRest(); 
 
-        if (newHoursInRoute <= 0) {
-            newHoursInRoute = 0;
+        Route* route;
+        double routeDistance = route->getDistance();
+
+        double newHoursInRoute = trip->getHoursInRoute() - hours;
+        double totalDistanceCovered = routeDistance - newHoursInRoute * transport->getSpeed(); // Calcula a distância já percorrida
+        double remainingDistance = routeDistance - totalDistanceCovered;
+
+        // Verifica se a distância entre descansos foi alcançada
+        if (totalDistanceCovered >= distanceBetweenRest) {
+            std::cout << "O transporte entrou em descanso após percorrer " << distanceBetweenRest << " km." << std::endl;
+            newHoursInRoute += restTime; // Adiciona o tempo de descanso
+            transport->setRestTime(0); // Reseta o tempo de descanso
+            totalDistanceCovered = 0; // Reseta a distância percorrida entre descansos
+        }
+
+        double totalTripHours = newHoursInRoute + restTime;
+
+        std::cout << "Horas restantes para a viagem ID " << trip->getId() << ": " << totalTripHours << std::endl;
+
+        if (remainingDistance <= 0) {
+            totalTripHours = 0;
             trip->setTripInProgress(false);
             std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
-                                            << " para " << trip->getDestination()->getCityName() 
-                                            << " finalizada." << std::endl;
+                      << " para " << trip->getDestination()->getCityName() 
+                      << " finalizada." << std::endl;
             
             // Atualiza a localização do transporte para o destino
-            Transport* transport = trip->getTransport();
             transport->setCurrentPlace(trip->getDestination());
-            transport->setTripStatus(false, 0);
+            transport->setTransportStatus(false, 0);
+            
             editTransportInTransports(db, *transport);
         } else {
             std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
-                                            << " para " << trip->getDestination()->getCityName() 
-                                            << " em andamento." << std::endl;
+                      << " para " << trip->getDestination()->getCityName() 
+                      << " em andamento." << std::endl;
+            
+            transport->setHoursRemaining(totalTripHours);
+            transport->setTransportStatus(true, totalTripHours);
+            editTransportInTransports(db, *transport);
         }
 
         trip->setHoursInRoute(newHoursInRoute);
@@ -426,4 +450,3 @@ bool advanceHours(sqlite3* db, double hours) {
 
     return true;
 }
-

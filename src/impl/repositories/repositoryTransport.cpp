@@ -33,6 +33,7 @@ void createTableTransports(sqlite3* db) {
             rest_time REAL NOT NULL,
             current_rest_time REAL NOT NULL,
             current_place TEXT,
+            transport_in_progress INTEGER NOT NULL,
             FOREIGN KEY(current_place) REFERENCES cities(name)
         );
     )";
@@ -47,11 +48,11 @@ void createTableTransports(sqlite3* db) {
 }
 
 bool addTransportInTransports(sqlite3* db, const std::string& transportName, const std::string& type, const int capacity, const float speed,
-    const float distanceBetweenRest, const float restTime, const std::string currentPlace) {
+    const float distanceBetweenRest, const float restTime, const std::string currentPlace, const bool inProgress) {
 
     const char* sql_insert = R"(
-        INSERT INTO transports (name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place)
-        VALUES (?, ?, ?, ?, ?, ?, 0, ?);
+        INSERT INTO transports (name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place, transport_in_progress)
+        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?);
     )";
 
     sqlite3_stmt* stmt;
@@ -69,6 +70,7 @@ bool addTransportInTransports(sqlite3* db, const std::string& transportName, con
     sqlite3_bind_double(stmt, 5, distanceBetweenRest);
     sqlite3_bind_double(stmt, 6, restTime);
     sqlite3_bind_text(stmt, 7, currentPlace.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 8, inProgress ? 1 : 0); 
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
@@ -82,7 +84,7 @@ bool addTransportInTransports(sqlite3* db, const std::string& transportName, con
 }
 
 Transport* findTransportByName(sqlite3* db, const std::string& transportName) {
-    const char* sql_select = "SELECT name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place FROM transports WHERE name = ?;";
+    const char* sql_select = "SELECT name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place, transport_in_progress FROM transports WHERE name = ?;";
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -104,11 +106,14 @@ Transport* findTransportByName(sqlite3* db, const std::string& transportName) {
         float currentRestTime = static_cast<float>(sqlite3_column_double(stmt, 6));
         const unsigned char* cityNameText = sqlite3_column_text(stmt, 7);
         std::string currentPlace = cityNameText ? reinterpret_cast<const char*>(cityNameText) : "";
+        int inProgressInt = sqlite3_column_int(stmt, 8);
+        bool inProgress = (inProgressInt == 1);
 
         // Converte a string para TransportTypeEnum
         TransportTypeEnum type = stringToTransportType(typeString);
 
         transport = new Transport(transportName, type, capacity, speed, distanceBetweenRest, restTime, currentRestTime, findCityByName(db, currentPlace));
+        transport->isInProgress();
     }
 
     sqlite3_finalize(stmt);
@@ -152,12 +157,9 @@ bool removeTransportInTransports(sqlite3* db, const std::string& transportName) 
 
 bool editTransportInTransports(sqlite3* db, const Transport& newTransport) {
 
-    // Tem que adicionar a verificação de se existe transport com esse nome na main 
-    //     antes de perguntar o resto das informações e chamar essa função
-
     const char* sql_edit = R"(
         UPDATE transports 
-        SET name = ?, type = ?, capacity = ?, speed = ?, distance_between_rest = ?, rest_time = ?, current_rest_time = ?, current_place = ?
+        SET name = ?, type = ?, capacity = ?, speed = ?, distance_between_rest = ?, rest_time = ?, current_rest_time = ?, current_place = ?, transport_in_progress = ?
         WHERE name = ?;
     )";
 
@@ -175,7 +177,8 @@ bool editTransportInTransports(sqlite3* db, const Transport& newTransport) {
         sqlite3_bind_double(stmt, 6, newTransport.getRestTime()) != SQLITE_OK ||
         sqlite3_bind_double(stmt, 7, newTransport.getCurrentRestTime()) != SQLITE_OK ||
         sqlite3_bind_text(stmt, 8, newTransport.getCurrentPlace()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 9, newTransport.getTransportName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+        sqlite3_bind_int(stmt, 9, newTransport.isInProgress() ? 1 : 0) != SQLITE_OK || // Bind transport_in_progress
+        sqlite3_bind_text(stmt, 10, newTransport.getTransportName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
 
         std::cerr << "Erro ao vincular os parâmetros: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
@@ -192,8 +195,9 @@ bool editTransportInTransports(sqlite3* db, const Transport& newTransport) {
     return true;
 }
 
+
 bool listTransportInTransports(sqlite3* db, std::list<Transport>& transports) {
-    const char* sql_select = "SELECT name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place FROM transports;";
+    const char* sql_select = "SELECT name, type, capacity, speed, distance_between_rest, rest_time, current_rest_time, current_place, transport_in_progress FROM transports;";
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -213,12 +217,15 @@ bool listTransportInTransports(sqlite3* db, std::list<Transport>& transports) {
         float restTime = static_cast<float>(sqlite3_column_double(stmt, 5));
         float currentRestTime = static_cast<float>(sqlite3_column_double(stmt, 6));
         std::string currentPlace(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7)));
+        int inProgressInt = sqlite3_column_int(stmt, 8);
+        bool inProgress = (inProgressInt == 1);
 
         // Converte a string para TransportTypeEnum
         TransportTypeEnum type = stringToTransportType(typeString);
 
         // Cria o objeto Transport e adiciona à lista
         transports.emplace_back(name, type, capacity, speed, distanceBetweenRest, restTime, currentRestTime, findCityByName(db, currentPlace));
+        transports.back().isInProgress(); // Assume a setter method exists
     }
 
     sqlite3_finalize(stmt);
@@ -247,3 +254,4 @@ std::list<Transport*> findAllTransports(sqlite3* db) {
     sqlite3_finalize(stmt);
     return transports;
 }
+

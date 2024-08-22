@@ -27,7 +27,7 @@ private:
     float currentRestTime;                  ///< Tempo atual de descanso em horas
     City* currentPlace;                     ///< Cidade onde o transporte está localizado
 
-    bool tripInProgress;                    ///< Indica se o transporte está em uma viagem
+    bool transportInProgress;               ///< Indica se o transporte está em uma viagem
     double hoursRemaining;                  ///< Horas restantes na viagem atual
 
 public:
@@ -42,8 +42,11 @@ public:
      * @param restTime Tempo de descanso em horas.
      * @param currentRestTime Tempo atual de descanso em horas.
      * @param currentPlace Ponteiro para a cidade onde o transporte está localizado.
+     * @param transportInProgress Indica se o transporte está em uma viagem.
+     * @param hoursRemaining Horas restantes na viagem atual.
      */
-    Transport(std::string transportName, TransportTypeEnum transportType, int capacity, float speed, float distanceBetweenRest, float restTime, float currentRestTime, City* currentPlace);
+    Transport(std::string transportName, TransportTypeEnum transportType, int capacity, float speed, float distanceBetweenRest, 
+              float restTime, float currentRestTime, City* currentPlace, bool transportInProgress = false, double hoursRemaining = 0.0);
 
     /**
      * @brief Obtém o nome do transporte.
@@ -103,7 +106,7 @@ public:
      * @brief Verifica se o transporte está em viagem.
      * @return Verdadeiro se o transporte está em viagem, falso caso contrário.
      */
-    bool isInTrip() const;
+    bool isInProgress() const;
 
     /**
      * @brief Obtém o tempo restante da viagem atual.
@@ -111,12 +114,16 @@ public:
      */
     double getHoursRemaining() const;
 
+    void setHoursRemaining(double hours);
+
+    void setRestTime(float time);
+
     /**
      * @brief Define se o transporte está em viagem e as horas restantes.
      * @param inProgress Verdadeiro se a viagem está em progresso, falso caso contrário.
      * @param hours Horas restantes na viagem atual.
      */
-    void setTripStatus(bool inProgress, double hours);
+    void setTransportStatus(bool inProgress, double hours);
 };
 
 #endif // TRANSPORT_HPP

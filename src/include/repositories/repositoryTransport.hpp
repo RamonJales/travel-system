@@ -13,7 +13,7 @@ TransportTypeEnum stringToTransportType(const std::string& typeString);
 std::string transportTypeToString(TransportTypeEnum type);
 void createTableTransports(sqlite3* db);
 bool addTransportInTransports(sqlite3* db, const std::string& transportName, const std::string& type, const int capacity, const float speed,
-const float distanceBetweenRest, const float restTime, std::string currentPlace);
+    const float distanceBetweenRest, const float restTime, const std::string currentPlace, const bool inProgress);
 Transport* findTransportByName(sqlite3* db, const std::string& transportName);
 bool removeTransportInTransports(sqlite3* db, const std::string& transportName);
 bool editTransportInTransports(sqlite3* db, const Transport& newTransport);

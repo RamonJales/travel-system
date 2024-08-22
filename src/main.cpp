@@ -137,7 +137,7 @@ int main() {
                     }
 
                     if(addTransportInTransports(db, transportName, transportTypeToString(transportType), capacity, speed, 
-                    distanceBetweenRest, restTime, currentPlace)){
+                    distanceBetweenRest, restTime, currentPlace, 0)){
                         std::cout << "Transporte " << transportName << " adicionado com sucesso." << std::endl;
                     }
 
@@ -339,6 +339,8 @@ int main() {
                             }
                             double duration = route->getDistance() / possibleTransport->getSpeed();
                             totalDuration += duration;
+                            totalDuration += possibleTransport->getRestTime();
+                            possibleTransport->setTransportStatus(true, totalDuration);
                             tripId = addTripInTrips(db, transportName, start, end, duration, passengers, false); // Cria a viagem inicialmente com trip_in_progress = false
                         }
                         std::cout << "A viagem levará um total de " << totalDuration << " horas." << std::endl;
@@ -358,8 +360,7 @@ int main() {
                         break;
                     }
 
-                    // Atualiza o status do transporte para indicar que está em viagem
-                    possibleTransport->setTripStatus(true, totalDuration); // Atualiza o status do transporte para em viagem
+                     // Atualiza o status do transporte para em viagem
                     editTransportInTransports(db, *possibleTransport);
 
                     break;
@@ -395,9 +396,9 @@ int main() {
                             std::cout << "Capacidade: " << transport->getCapacity() << std::endl;
                             std::cout << "Velocidade: " << transport->getSpeed() << " km/h" << std::endl;
 
-                            if (transport->isInTrip() && transport->getHoursRemaining() > 0) {
+                            if (transport->isInProgress()) {
                                 std::cout << "Localização Atual: No caminho" << std::endl;
-                            } else if (!transport->isInTrip() && transport->getCurrentPlace() != nullptr) {
+                            } else {
                                 std::cout << "Localização Atual: " << transport->getCurrentPlace()->getCityName() << std::endl;
                             }
 
