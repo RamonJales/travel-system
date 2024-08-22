@@ -378,12 +378,16 @@ bool advanceHours(sqlite3* db, double hours) {
         double totalDistanceCovered = routeDistance - newHoursInRoute * transport->getSpeed(); // Calcula a distância já percorrida
         double remainingDistance = routeDistance - totalDistanceCovered;
 
-        // Verifica se a distância entre descansos foi alcançada
         if (totalDistanceCovered >= distanceBetweenRest) {
             std::cout << "O transporte entrou em descanso após percorrer " << distanceBetweenRest << " km." << std::endl;
-            newHoursInRoute += restTime; // Adiciona o tempo de descanso
-            transport->setRestTime(0); // Reseta o tempo de descanso
-            totalDistanceCovered = 0; // Reseta a distância percorrida entre descansos
+            newHoursInRoute += restTime; 
+            transport->setRestTime(0); 
+            totalDistanceCovered = 0;
+        }
+
+        
+        if (newHoursInRoute < 0) {
+            newHoursInRoute = 0;
         }
 
         double totalTripHours = newHoursInRoute + restTime;
@@ -397,7 +401,6 @@ bool advanceHours(sqlite3* db, double hours) {
                       << " para " << trip->getDestination()->getCityName() 
                       << " finalizada." << std::endl;
             
-            // Atualiza a localização do transporte para o destino
             transport->setCurrentPlace(trip->getDestination());
             transport->setTransportStatus(false, 0);
             
@@ -414,7 +417,6 @@ bool advanceHours(sqlite3* db, double hours) {
 
         trip->setHoursInRoute(newHoursInRoute);
 
-        // Atualiza o valor de hours_in_route e o status da viagem no banco de dados
         const char* sql_update = R"(
             UPDATE trips
             SET hours_in_route = ?, trip_in_progress = ?
@@ -443,7 +445,6 @@ bool advanceHours(sqlite3* db, double hours) {
         sqlite3_finalize(stmt);
     }
 
-    // Limpa a lista de viagens
     for (Trip* trip : tripsInProgress) {
         delete trip;
     }
