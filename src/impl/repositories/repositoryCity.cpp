@@ -192,9 +192,6 @@ void incrementCityVisit(sqlite3* db, const std::string& cityName) {
     sqlite3_finalize(stmt);
 }
 
-#include <iostream>
-#include <sqlite3.h>
-
 void findMostFrequentCities(sqlite3* db) {
     const char* sql_query = R"(
         SELECT name, visits

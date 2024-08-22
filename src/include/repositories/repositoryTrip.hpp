@@ -12,7 +12,7 @@
 #include "../../include/repositories/repositoryTrip.hpp"
 
 void createTableTrips(sqlite3* db);
-bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers, const bool inProgress);
+int addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers, const bool inProgress);
 Trip* findTripById(sqlite3* db, int tripId);
 std::list<Passenger*> findPassengersInTrip(sqlite3* db, int tripId);
 bool addPassengersInTripDB(sqlite3* db, const int tripId, const std::list<Passenger*> passengers);

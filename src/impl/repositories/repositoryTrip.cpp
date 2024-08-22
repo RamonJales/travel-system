@@ -41,7 +41,7 @@ void createTableTrips(sqlite3* db) {
     }
 }
 
-bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers, const bool inProgress) {
+int addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers, const bool inProgress) {
     const char* sql_insert = R"(
         INSERT INTO trips (transport_name, origin_city_name, destination_city_name, hours_in_route, trip_in_progress)
         VALUES (?, ?, ?, ?, ?);
@@ -51,7 +51,7 @@ bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::st
     int rc = sqlite3_prepare_v2(db, sql_insert, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         std::cerr << "Erro ao preparar o SQL: " << sqlite3_errmsg(db) << std::endl;
-        return false;
+        return -1;
     }
 
 
@@ -66,7 +66,7 @@ bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::st
     if (rc != SQLITE_DONE) {
         std::cerr << "Erro ao inserir a viagem: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
-        return false;
+        return -1;
     }
 
     // Captura o ID da linha recém-criada
@@ -74,7 +74,7 @@ bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::st
 
     sqlite3_finalize(stmt);
     addPassengersInTripDB(db, tripId, passengers);
-    return true;
+    return tripId;
 }
 
 Trip* findTripById(sqlite3* db, int tripId) {
@@ -156,7 +156,8 @@ std::list<Passenger*> findPassengersInTrip(sqlite3* db, int tripId) {
         std::string passengerName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
 
         // Cria o objeto Passenger e adiciona à lista
-        passengers.emplace_back(findPassengerByName(db, passengerName));
+        Passenger* passenger = findPassengerByName(db, passengerName);
+        passengers.emplace_back(passenger);
     }
 
     sqlite3_finalize(stmt);
@@ -178,8 +179,9 @@ bool addPassengersInTripDB(sqlite3* db, const int tripId, const std::list<Passen
         }
 
         // Vincula os parâmetros ao comando SQL
+        const std::string passengerName = passenger->getName();
         sqlite3_bind_int(stmt, 1, tripId);
-        sqlite3_bind_text(stmt, 2, passenger->getName().c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, passengerName.c_str(), -1, SQLITE_STATIC);
 
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_DONE) {
@@ -376,15 +378,12 @@ bool advanceHours(sqlite3* db, double hours) {
                                             << " finalizada." << std::endl;
             
             // Atualiza a localização do transporte para o destino
-            std::list<Transport*> transports = findAllTransports(db);
-            for (Transport* transport : transports) {
-                if (transport->isInTrip()) {
-                    transport->setCurrentPlace(trip->getDestination());
-                    transport->setTripStatus(false, 0);
-                }
-            }
+            Transport* transport = trip->getTransport();
+            transport->setCurrentPlace(trip->getDestination());
+            transport->setTripStatus(false, 0);
+            editTransportInTransports(db, *transport);
         } else {
-             std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
+            std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
                                             << " para " << trip->getDestination()->getCityName() 
                                             << " em andamento." << std::endl;
         }
@@ -404,9 +403,12 @@ bool advanceHours(sqlite3* db, double hours) {
             return false;
         }
 
+        int tripProgress = trip->isTripInProgress() ? 1 : 0;
+        int tripId = trip->getId();
+
         sqlite3_bind_double(stmt, 1, newHoursInRoute);
-        sqlite3_bind_int(stmt, 2, trip->isTripInProgress() ? 1 : 0);
-        sqlite3_bind_int(stmt, 3, trip->getId());
+        sqlite3_bind_int(stmt, 2, tripProgress);
+        sqlite3_bind_int(stmt, 3, tripId);
 
         if (sqlite3_step(stmt) != SQLITE_DONE) {
             std::cerr << "Erro ao atualizar a viagem: " << sqlite3_errmsg(db) << std::endl;
