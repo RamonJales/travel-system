@@ -34,6 +34,8 @@ class City {
          * @return Nome da cidade.
          */
         std::string getCityName() const;
+
+        void setCityName(std::string name);
 };
 
 #endif

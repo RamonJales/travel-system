@@ -9,6 +9,7 @@ void createTableTrips(sqlite3* db) {
             destination_city_name TEXT NOT NULL,
             next_trip_id INTEGER,
             hours_in_route DOUBLE,
+            total_duration DOUBLE,
             trip_in_progress INTEGER NOT NULL,
             FOREIGN KEY(transport_name) REFERENCES transports(name),
             FOREIGN KEY(origin_city_name) REFERENCES cities(name),
@@ -41,10 +42,10 @@ void createTableTrips(sqlite3* db) {
     }
 }
 
-int addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers, const bool inProgress) {
+int addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double totalDuration, const std::list<Passenger*> passengers, const bool inProgress) {
     const char* sql_insert = R"(
-        INSERT INTO trips (transport_name, origin_city_name, destination_city_name, hours_in_route, trip_in_progress)
-        VALUES (?, ?, ?, ?, ?);
+        INSERT INTO trips (transport_name, origin_city_name, destination_city_name, hours_in_route, total_duration, trip_in_progress)
+        VALUES (?, ?, ?, 0, ?, ?);
     )";
 
     sqlite3_stmt* stmt;
@@ -59,7 +60,7 @@ int addTripInTrips(sqlite3* db, const std::string& transportName, const std::str
     sqlite3_bind_text(stmt, 1, transportName.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, originCityName.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 3, destinationCityName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_double(stmt, 4, hoursInRoute);
+    sqlite3_bind_double(stmt, 4, totalDuration);
     sqlite3_bind_int(stmt, 5, inProgress ? 1 : 0); // Define o valor de inProgress como 1 (verdadeiro) ou 0 (falso)
 
     rc = sqlite3_step(stmt);
@@ -352,7 +353,7 @@ std::list<Trip*> listTripsInProgress(sqlite3* db) {
     return trips;
 }
 
-bool advanceHours(sqlite3* db, double hours) {
+bool advanceHours(sqlite3* db, double hours, CityGraph g) {
     std::list<Trip*> tripsInProgress = listTripsInProgress(db);
 
     if (tripsInProgress.empty()) {
@@ -366,12 +367,33 @@ bool advanceHours(sqlite3* db, double hours) {
             continue;
         }
 
-        Transport* transport = trip->getTransport();
+        Transport* transport = findTransportByName(db, trip->getTransport()->getTransportName());
         double restTime = transport->getRestTime(); 
-        double distanceBetweenRest = transport->getDistanceBetweenRest(); 
+        double distanceBetweenRest = transport->getDistanceBetweenRest();
 
-        Route* route;
-        double routeDistance = route->getDistance();
+        std::string originCityName = trip->getOrigin()->getCityName();
+        std::string destinationCityName = trip->getDestination()->getCityName();
+
+        //Calcular a distância da rota entre as cidades
+        std::vector<std::string> path = g.CityGraph::findShortestPath(originCityName, destinationCityName);
+        double routeDistance = 0;
+        if (!path.empty()) {
+            for (size_t i = 0; i < path.size() - 1; i++) {
+                std::string start = path[i];
+                std::string end = path[i + 1];
+                Route* route = findRouteByCities(db, start, end);
+                if (route == nullptr) {
+                    std::cout << "Erro no sistema! Não existe trajeto entre " << start << " e " << end << std::endl;
+                    break;
+                }
+                double pathDistance = route->getDistance();
+                routeDistance += pathDistance;
+            }
+        } else {
+            std::cout << "Não existe trajeto entre " << originCityName << " e " << destinationCityName << std::endl;
+            break;
+        }
+
         double speed = transport->getSpeed();
 
         // Calcula o tempo necessário para concluir a viagem (sem considerar descansos)
@@ -382,7 +404,7 @@ bool advanceHours(sqlite3* db, double hours) {
 
         double totalTripHours = timeToCompleteTrip;
 
-        if (needsRest && distanceBetweenRest <= (timeToCompleteTrip * speed)) {
+        if (needsRest && distanceBetweenRest <= (hours * speed)) {
             // O transporte precisa descansar
             totalTripHours += restTime;
             std::cout << "O transporte entrou em descanso após percorrer " << distanceBetweenRest << " km." << std::endl;
@@ -398,18 +420,34 @@ bool advanceHours(sqlite3* db, double hours) {
                       << " para " << trip->getDestination()->getCityName() 
                       << " finalizada." << std::endl;
             
-            transport->setCurrentPlace(trip->getDestination());
+            City* cityDestination = trip->getDestination();
+            transport->setCurrentPlace(cityDestination);
             transport->setTransportStatus(false, 0);
             
             editTransportInTransports(db, *transport);
+
+            std::list<Passenger *> passengers = findPassengersInTrip(db, trip->getId());
+            for(Passenger* passenger : passengers){
+                passenger->setCurrentLocation(*cityDestination);
+                editPassengerInPassengers(db, *passenger);
+            }
+            delete cityDestination;
         } else {
             std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
                       << " para " << trip->getDestination()->getCityName() 
                       << " em andamento." << std::endl;
             
+            City* InTrip = new City();
+            InTrip->setCityName("em viagem");
             transport->setHoursRemaining(totalTripHours - newHoursInRoute);
             transport->setTransportStatus(true, totalTripHours - newHoursInRoute);
+            transport->setCurrentPlace(InTrip);
             editTransportInTransports(db, *transport);
+            std::list<Passenger *> passengers = findPassengersInTrip(db, trip->getId());
+            for(Passenger* passenger : passengers){
+                passenger->setCurrentLocation(*InTrip);
+                editPassengerInPassengers(db, *passenger);
+            }
         }
 
         trip->setHoursInRoute(newHoursInRoute);

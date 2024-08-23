@@ -7,6 +7,8 @@
 #include "./repositoryCity.hpp"
 #include "./repositoryPassenger.hpp"
 #include "./repositoryTransport.hpp"
+#include "./repositoryRoute.hpp"
+#include "../CityGraph.hpp"
 #include <iostream>
 #include <list>
 
@@ -22,7 +24,7 @@ bool editTripInTrips(sqlite3* db, Trip* trip);
 bool updateTripInProgress(sqlite3* db, int tripId, bool inProgress);
 std::list<Trip*> listTripInTrips(sqlite3* db);
 std::list<Trip*> listTripsInProgress(sqlite3* db);
-bool advanceHours(sqlite3* db, double hours);
+bool advanceHours(sqlite3* db, double hours, CityGraph g);
 int getTransportIdByTripId(sqlite3* db, int tripId);
 bool updateTransportInProgress(sqlite3* db, int transportId, bool inProgress, double hoursRemaining);
 

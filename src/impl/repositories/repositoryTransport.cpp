@@ -33,8 +33,7 @@ void createTableTransports(sqlite3* db) {
             rest_time REAL NOT NULL,
             current_rest_time REAL NOT NULL,
             current_place TEXT,
-            transport_in_progress INTEGER NOT NULL,
-            FOREIGN KEY(current_place) REFERENCES cities(name)
+            transport_in_progress INTEGER NOT NULL
         );
     )";
 
@@ -169,21 +168,26 @@ bool editTransportInTransports(sqlite3* db, const Transport& newTransport) {
         return false;
     }
 
-    if (sqlite3_bind_text(stmt, 1, newTransport.getTransportName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 2, transportTypeToString(newTransport.getTransportType()).c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 3, newTransport.getCapacity()) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 4, newTransport.getSpeed()) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 5, newTransport.getDistanceBetweenRest()) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 6, newTransport.getRestTime()) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 7, newTransport.getCurrentRestTime()) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 8, newTransport.getCurrentPlace()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 9, newTransport.isInProgress() ? 1 : 0) != SQLITE_OK || // Bind transport_in_progress
-        sqlite3_bind_text(stmt, 10, newTransport.getTransportName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK) {
+    const std::string transportName = newTransport.getTransportName();
+    const std::string transportTypeStr = transportTypeToString(newTransport.getTransportType());
+    const int transportCapacity = newTransport.getCapacity();
+    const double transportSpeed = newTransport.getSpeed();
+    const double transportDistanceBetweenRest = newTransport.getDistanceBetweenRest();
+    const double transportRestTime = newTransport.getRestTime();
+    const double transportCurrentRestTime = newTransport.getCurrentRestTime();
+    const std::string transportCurrentPlaceStr = newTransport.getCurrentPlace()->getCityName();
+    const int transportInProgress = newTransport.isInProgress() ? 1 : 0;
 
-        std::cerr << "Erro ao vincular os parâmetros: " << sqlite3_errmsg(db) << std::endl;
-        sqlite3_finalize(stmt);
-        return false;
-    }
+    sqlite3_bind_text(stmt, 1, transportName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, transportTypeStr.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 3, transportCapacity);
+    sqlite3_bind_double(stmt, 4, transportSpeed);
+    sqlite3_bind_double(stmt, 5, transportDistanceBetweenRest);
+    sqlite3_bind_double(stmt, 6, transportRestTime);
+    sqlite3_bind_double(stmt, 7, transportCurrentRestTime);
+    sqlite3_bind_text(stmt, 8, transportCurrentPlaceStr.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 9, transportInProgress);
+    sqlite3_bind_text(stmt, 10, transportName.c_str(), -1, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         std::cerr << "Erro ao alterar o transporte: " << sqlite3_errmsg(db) << std::endl;

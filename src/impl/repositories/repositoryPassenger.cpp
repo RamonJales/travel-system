@@ -5,8 +5,7 @@ void createTablePassengers(sqlite3* db) {
         CREATE TABLE IF NOT EXISTS passengers (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL UNIQUE,
-            current_location TEXT,
-            FOREIGN KEY(current_location) REFERENCES cities(name)
+            current_location TEXT NOT NULL
         );
     )";
 
@@ -128,7 +127,7 @@ bool editPassengerInPassengers(sqlite3* db, Passenger& newPassenger) {
     const char* sql_edit = R"(
         UPDATE passengers 
         SET name = ?, current_location = ?
-        WHERE id = ?;
+        WHERE name = ?;
     )";
 
     sqlite3_stmt* stmt = nullptr;
@@ -137,14 +136,12 @@ bool editPassengerInPassengers(sqlite3* db, Passenger& newPassenger) {
         return false;
     }
 
-    if (sqlite3_bind_text(stmt, 1, newPassenger.getName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 2, newPassenger.getCurrentLocation().getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 3, newPassenger.getId())  != SQLITE_OK) {
+    const std::string passengerName = newPassenger.getName();
+    const std::string passengerLocation = newPassenger.getCurrentLocation().getCityName();
 
-        std::cerr << "Erro ao vincular os parâmetros: " << sqlite3_errmsg(db) << std::endl;
-        sqlite3_finalize(stmt);
-        return false;
-    }
+    sqlite3_bind_text(stmt, 1, passengerName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, passengerLocation.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, passengerName.c_str(), -1, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         std::cerr << "Erro ao alterar o passageiro: " << sqlite3_errmsg(db) << std::endl;

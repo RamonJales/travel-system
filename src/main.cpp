@@ -359,12 +359,12 @@ int main() {
 
            case 6:
                 {
-                    int hoursToAdvance;
+                    double hoursToAdvance;
                     std::cout << "Digite a quantidade de horas para avançar: ";
                     std::cin >> hoursToAdvance;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-                    if (advanceHours(db, hoursToAdvance)) {
+                    if (advanceHours(db, hoursToAdvance, g)) {
                         std::cout << "Horas avançadas com sucesso." << std::endl;
                     } else {
                         std::cout << "Erro ao avançar as horas." << std::endl;
