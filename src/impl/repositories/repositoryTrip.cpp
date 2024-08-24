@@ -374,7 +374,6 @@ bool advanceHours(sqlite3* db, double hours, CityGraph g) {
         std::string originCityName = trip->getOrigin()->getCityName();
         std::string destinationCityName = trip->getDestination()->getCityName();
 
-        //Calcular a distância da rota entre as cidades
         std::vector<std::string> path = g.CityGraph::findShortestPath(originCityName, destinationCityName);
         double routeDistance = 0;
         if (!path.empty()) {
@@ -395,25 +394,22 @@ bool advanceHours(sqlite3* db, double hours, CityGraph g) {
         }
 
         double speed = transport->getSpeed();
-
-        // Calcula o tempo necessário para concluir a viagem (sem considerar descansos)
         double timeToCompleteTrip = routeDistance / speed;
-
-        // Verifica se a viagem atinge o ponto de descanso
         bool needsRest = (routeDistance >= distanceBetweenRest);
-
         double totalTripHours = timeToCompleteTrip;
 
-        if (needsRest && distanceBetweenRest <= (hours * speed)) {
-            // O transporte precisa descansar
-            totalTripHours += restTime;
-            std::cout << "O transporte entrou em descanso após percorrer " << distanceBetweenRest << " km." << std::endl;
+        if (needsRest) {
+            // Verifica se o transporte precisa de descanso e se as horas avançadas permitem descanso
+            double hoursToRest = distanceBetweenRest / speed;
+            if (hoursToRest == hours) {
+                totalTripHours += restTime;
+                std::cout << "O transporte entrou em descanso após percorrer " << distanceBetweenRest << " km." << std::endl;
+            }
         }
 
         double newHoursInRoute = trip->getHoursInRoute() + hours;
 
-        // Se as horas avançadas superam o tempo necessário, o total de horas na rota é ajustado
-        if (newHoursInRoute >= totalTripHours) {
+        if (newHoursInRoute >= totalTripHours) { // Alterado para maior ou igual
             newHoursInRoute = totalTripHours;
             trip->setTripInProgress(false);
             std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
@@ -431,6 +427,8 @@ bool advanceHours(sqlite3* db, double hours, CityGraph g) {
                 passenger->setCurrentLocation(*cityDestination);
                 editPassengerInPassengers(db, *passenger);
             }
+
+            incrementCityVisit(db, destinationCityName);
             delete cityDestination;
         } else {
             std::cout << "Viagem de " << trip->getOrigin()->getCityName() 

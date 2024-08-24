@@ -21,9 +21,9 @@
 #include <list>
 #include <cstdlib>
 #include <limits>
+#include <algorithm>
 
 int main() {
-    //iniciar banco de dados e criar as tabelas
     sqlite3 *db;
     if (sqlite3_open("travel-system-database.db", &db)) {
         std::cerr << "Erro ao abrir o banco de dados: " << sqlite3_errmsg(db) << std::endl;
@@ -38,7 +38,6 @@ int main() {
     std::unordered_map<std::string, std::list<std::pair<std::string, double>>> cityGraph;
     CityGraph g = CityGraph(cityGraph);
 
-    // Buscar to das as rotas no banco com um findAllRoutes, e adicionar no grafo
     std::vector<Route> routes = findAllRoutesInRoutes(db);
     for (Route route : routes) {
         g.addEdge(route.getOriginCity(), route.getDestinationCity(), route.getDistance());
@@ -65,6 +64,14 @@ int main() {
                     std::cout << "Digite o nome da cidade: ";
                     std::getline(std::cin, cityName);
 
+                    cityName.erase(0, cityName.find_first_not_of(' '));
+                    cityName.erase(cityName.find_last_not_of(' ') + 1);
+
+                    if (cityName.empty() || std::all_of(cityName.begin(), cityName.end(), ::isdigit)) {
+                        std::cout << "Nome inválido. O nome da cidade não pode ser vazio nem conter apenas números." << std::endl;
+                        break;
+                    }
+
                     City* city = findCityByName(db, cityName);
                     if (city != nullptr) {
                         std::cout << "A cidade \"" << cityName << "\" já está cadastrada no banco de dados." << std::endl;
@@ -80,6 +87,11 @@ int main() {
                     std::string transportName;
                     std::cout << "Digite o nome do transporte: ";
                     std::getline(std::cin, transportName);
+                    if (transportName.empty()) {
+                        std::cerr << "Erro: O nome do transporte não pode ser vazio." << std::endl;
+                        break;
+                    }
+
                     Transport* transport = findTransportByName(db, transportName);
                     if (transport != nullptr) {
                         std::cout << "O transporte \"" << transportName << "\" já está cadastrado no banco de dados." << std::endl;
@@ -87,15 +99,20 @@ int main() {
                     }
 
                     std::string transportTypeString;
-                    std::cout << "Digite o tipo do transporte (GROUND or WATER): ";
+                    std::cout << "Digite o tipo do transporte (GROUND ou WATER): ";
                     std::getline(std::cin, transportTypeString);
+                    if (transportTypeString.empty()) {
+                        std::cerr << "Erro: O tipo do transporte não pode ser vazio." << std::endl;
+                        break;
+                    }
+
                     TransportTypeEnum transportType = stringToTransportType(transportTypeString);
 
                     int capacity;
                     std::cout << "Digite a capacidade: ";
                     std::cin >> capacity;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                    if(capacity <= 0){
+                    if(capacity < 0){
                         std::cout << "Capacidade inválida." << std::endl;
                         break;
                     }
@@ -123,13 +140,18 @@ int main() {
                     std::cin >> restTime;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                     if(restTime < 0){
-                        std::cout << "Tempo inválida." << std::endl;
+                        std::cout << "Tempo inválido." << std::endl;
                         break;
                     }
 
                     std::string currentPlace;
                     std::cout << "Digite o nome da cidade atual: ";
                     std::getline(std::cin, currentPlace);
+                    if (currentPlace.empty()) {
+                        std::cerr << "Erro: O nome da cidade atual não pode ser vazio." << std::endl;
+                        break;
+                    }
+
                     City* city = findCityByName(db, currentPlace);
                     if(city == nullptr){
                         std::cout << "Cidade " << currentPlace << " não existe." << std::endl;
@@ -148,42 +170,34 @@ int main() {
                     std::string passengerName;
                     std::string cityName;
 
-                    // Get the passenger's name
                     std::cout << "Digite o nome do passageiro: ";
                     std::getline(std::cin, passengerName);
 
-                    // Check if the passenger's name is empty
-                    if (passengerName.empty()) {
-                        std::cerr << "Erro: O nome do passageiro não pode ser vazio." << std::endl;
+                    if (passengerName.empty() || std::all_of(passengerName.begin(), passengerName.end(), ::isdigit)) {
+                        std::cout << "Nome inválido. O nome da passageiro não pode ser vazio nem conter apenas números." << std::endl;
                         break;
                     }
 
-                    // Get the name of the origin city
                     std::cout << "Digite o nome da cidade de origem: ";
                     std::getline(std::cin, cityName);
 
-                    // Check if the city name is empty
-                    if (cityName.empty()) {
-                        std::cerr << "Erro: O nome da cidade de origem não pode ser vazio." << std::endl;
+                    if (cityName.empty() || std::all_of(cityName.begin(), cityName.end(), ::isdigit)) {
+                        std::cout << "Nome inválido. O nome da cidade não pode ser vazio nem conter apenas números." << std::endl;
                         break;
                     }
 
-                    // Find the passenger by name in the database
                     Passenger* passenger = findPassengerByName(db, passengerName);
                     if (passenger != nullptr) {
                         std::cout << "O passageiro \"" << passengerName << "\" já está cadastrado no banco de dados." << std::endl;
                     } else {
-                        // Find the city by name in the database
                         City* cityPtr = findCityByName(db, cityName);
                         if (cityPtr == nullptr) {
                             std::cerr << "Erro: A cidade de origem \"" << cityName << "\" não foi encontrada no banco de dados." << std::endl;
                             break;
                         }
 
-                        // Dereference the pointer to get the City object
                         City originCity = *cityPtr;
 
-                        // Add the passenger along with the origin city
                         if (addPassengerInPassengers(db, passengerName, originCity.getCityName())) {
                             std::cout << "Passageiro cadastrado com sucesso!" << std::endl;
                         } else {
@@ -229,7 +243,6 @@ int main() {
                         break;
                     }
 
-                    //Verificar se a rota entre as cidades já existe no tipo de rota escolhido
                     Route* possibleRoute = findRouteByCities(db, originCityName, destinationCityName);
                     if(possibleRoute != nullptr){
                         if(possibleRoute->getRouteType() == routeType){
@@ -238,7 +251,7 @@ int main() {
                         }
                     }
 
-                    std:: cout << "Digite a distância da rota: (em km) ";
+                    std:: cout << "Digite a distância da rota (em km): ";
                     std::cin >> routeDistance;
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
@@ -251,9 +264,10 @@ int main() {
                     g.addEdge(originCityName, destinationCityName, routeDistance);
 
                     addRouteInRoutes(db, *route);
+                    std::cout << "Rota cadastrada com sucesso." << std::endl;
                     break;
                 }
-           case 5:
+            case 5:
                 {
                     std::string originCity;
                     std::string destinationCity;
@@ -297,19 +311,34 @@ int main() {
                         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
                         if (opt == 1) {
+                            if (passengers.size() >= possibleTransport->getCapacity()) {
+                                std::cout << "Erro: O número de passageiros excede a capacidade do transporte." << std::endl;
+                                break;
+                            }
+
                             std::string passengerName;
                             std::cout << "Digite o nome do passageiro: ";
                             std::getline(std::cin, passengerName);
+
                             Passenger* passenger = findPassengerByName(db, passengerName);
                             if (passenger == nullptr) {
                                 std::cout << "Passageiro " << passengerName << " não existe." << std::endl;
                             } else {
-                                passengers.push_back(passenger);
-                                std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
+                                if (passenger->getCurrentLocation().getCityName() != originCity) {
+                                    std::cout << "O passageiro " << passengerName << " não está na cidade de origem." << std::endl;
+                                } else {
+                                    passengers.push_back(passenger);
+                                    std::cout << "Passageiro " << passengerName << " adicionado com sucesso." << std::endl;
+                                }
                             }
                         } else if (opt != 0) {
                             std::cout << "Opção inválida." << std::endl;
                         }
+                    }
+
+                    if (passengers.empty()) {
+                        std::cout << "Erro: A viagem precisa de pelo menos um passageiro para iniciar." << std::endl;
+                        break;
                     }
 
                     std::vector<std::string> path = g.CityGraph::findShortestPath(originCity, destinationCity);
@@ -330,10 +359,6 @@ int main() {
                             double duration = routeDistance / possibleTransport->getSpeed();
                             totalDuration += duration;
 
-                            // if (routeDistance >= possibleTransport->getDistanceBetweenRest()) {
-                            //     totalDuration += possibleTransport->getRestTime();
-                            // }
-                           
                             tripId = addTripInTrips(db, transportName, start, end, totalDuration, passengers, false);
                         }
                         std::cout << "A viagem levará um total de " << (totalDuration + possibleTransport->getRestTime()) << " horas." << std::endl;
@@ -354,7 +379,6 @@ int main() {
 
                     break;
                 }
-
 
 
            case 6:
@@ -380,6 +404,11 @@ int main() {
                         std::cout << "Não há transportes cadastrados." << std::endl;
                     } else {
                         for (Transport* transport : transports) {
+                            if (transport == nullptr) {
+                                std::cerr << "Erro: Transporte nulo encontrado na lista." << std::endl;
+                                continue;
+                            }
+
                             std::cout << "======================================" << std::endl;
                             std::cout << "Nome: " << transport->getTransportName() << std::endl;
                             std::cout << "Tipo: " << transportTypeToString(transport->getTransportType()) << std::endl;
@@ -389,7 +418,12 @@ int main() {
                             if (transport->isInProgress()) {
                                 std::cout << "Localização Atual: No caminho" << std::endl;
                             } else {
-                                std::cout << "Localização Atual: " << transport->getCurrentPlace()->getCityName() << std::endl;
+                                City* currentPlace = transport->getCurrentPlace();
+                                if (currentPlace) {
+                                    std::cout << "Localização Atual: " << currentPlace->getCityName() << std::endl;
+                                } else {
+                                    std::cout << "Localização Atual: No caminho" << std::endl;
+                                }
                             }
 
                             std::cout << "======================================" << std::endl;
@@ -398,22 +432,29 @@ int main() {
                     break;
                 }
 
-            
             case 8:
                 {
                     std::list<Passenger*> passengers = findAllPassengers(db);
-                    if(passengers.empty()) {
+                    if (passengers.empty()) {
                         std::cout << "Não há passageiros cadastrados." << std::endl;
                     } else {
-                        for(Passenger* passenger : passengers) {
+                        for (Passenger* passenger : passengers) {
                             std::cout << "======================================" << std::endl;
                             std::cout << "Nome: " << passenger->getName() << std::endl;
-                            std::cout << "Localização Atual: " << passenger->getCurrentLocation().getCityName() << std::endl;
+
+                            City currentLocation = passenger->getCurrentLocation();
+                            if (currentLocation.getCityName().empty()) {
+                                std::cout << "Localização Atual: Em caminho" << std::endl;
+                            } else {
+                                std::cout << "Localização Atual: " << currentLocation.getCityName() << std::endl;
+                            }
+
                             std::cout << "======================================" << std::endl;
                         }
                     }
                     break;
                 }
+
             
             case 9:
                 {
@@ -470,7 +511,7 @@ int main() {
                             std::cout << "Origem: " << origin->getCityName() << std::endl;
                             std::cout << "Destino: " << destination->getCityName() << std::endl;
                             std::cout << "Transporte: " << transport->getTransportName() << std::endl;
-                            std::cout << "Duração: " << trip->getTotalHours() << " horas" << std::endl;
+                            std::cout << "Duração: " << trip->getHoursInRoute() << " horas" << std::endl;
                             std::cout << "Passageiros: ";
                             
                             std::list<Passenger*> passengers = trip->getPassengers();
@@ -491,9 +532,8 @@ int main() {
                         }
                     }
 
-                    // Limpeza dos objetos Trip após o uso
                     for (Trip* trip : trips) {
-                        delete trip; // Certifique-se de que Trip foi alocado com `new` e não é gerenciado por outro lugar
+                        delete trip; 
                     }
 
                     break;
@@ -606,7 +646,7 @@ int main() {
                             std::cout << "======================================" << std::endl;
                         }
                     }
-                    
+                    break;
                 }
 
             default:
