@@ -114,8 +114,16 @@ public:
      */
     double getHoursRemaining() const;
 
+    /**
+     * @brief Define o tempo restante da viagem atual.
+     * @param hours Horas restantes na viagem atual.
+     */
     void setHoursRemaining(double hours);
 
+    /**
+     * @brief Define o tempo de descanso do transporte.
+     * @param time Tempo de descanso em horas.
+     */
     void setRestTime(float time);
 
     /**
