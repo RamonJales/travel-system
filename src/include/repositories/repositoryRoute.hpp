@@ -12,7 +12,7 @@ bool addRouteInRoutes(sqlite3* db, Route& route);
 bool updateRouteInRoutes(sqlite3* db, const Route newRoute);
 Route* findRouteByCities(sqlite3* db, const std::string& originCity, const std::string& destinationCity);
 Route* findRouteById(sqlite3* db, const int id);
-bool deleteRouteByIdInRoutes(sqlite3* db, const int id);
+bool deleteRouteByIdInRoutes(sqlite3* db, const std::string originCityName, const std::string destinationCityName);
 std::vector<Route> findAllRoutesInRoutes(sqlite3* db);
 
 #endif
