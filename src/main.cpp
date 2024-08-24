@@ -534,6 +534,80 @@ int main() {
 
                     break;
                 }
+                case 13:
+                {
+                    std::string cityName;
+                    std::cout << "Digite o nome da cidade que deseja deletar: ";
+                    std::getline(std::cin, cityName);
+
+                    if(removeCityInCities(db, cityName)){
+                        std::cout << "Cidade " << cityName << " removida com sucesso." << std::endl;
+                    } else {
+                        std::cout << "Cidade " << cityName << " não existe." << std::endl;
+                    }
+                    break;
+                }
+                case 14:
+                {
+                    std::string transportName;
+                    std::cout << "Digite o nome do transporte que deseja deletar: ";
+                    std::getline(std::cin, transportName);
+
+                    if(removeTransportInTransports(db, transportName)){
+                        std::cout << "Transporte " << transportName << " removido com sucesso." << std::endl;
+                    } else {
+                        std::cout << "Transporte " << transportName << " não existe." << std::endl;
+                    }
+                    break;
+                }
+                case 15:
+                {
+                    std::string passengerName;
+                    std::cout << "Digite o nome do passageiro que deseja deletar: ";
+                    std::getline(std::cin, passengerName);
+
+                    if(removePassengerInPassengers(db, passengerName)){
+                        std::cout << "Passageiro " << passengerName << " removido com sucesso." << std::endl;
+                    } else {
+                        std::cout << "Passageiro " << passengerName << " não existe." << std::endl;
+                    }
+                    break;
+                }
+                case 16:
+                {
+                    std::string originCityName;
+                    std::string destinationCityName;
+
+                    std::cout << "Digite o nome da cidade de origem: ";
+                    std::getline(std::cin, originCityName);
+
+                    std::cout << "Digite o nome da cidade de destino: ";
+                    std::getline(std::cin, destinationCityName);
+
+                    if(deleteRouteByIdInRoutes(db, originCityName, destinationCityName)){
+                        std::cout << "Rota entre " << originCityName << " e " << destinationCityName << " removida com sucesso." << std::endl;
+                    } else {
+                        std::cout << "Rota entre " << originCityName << " e " << destinationCityName << " não existe." << std::endl;
+                    }
+                    break;
+                }
+                case 17:
+                {
+                    std::vector<Route> routes;
+                    routes = findAllRoutesInRoutes(db);
+                    if(routes.empty()){
+                        std::cout << "Não há rotas cadastradas." << std::endl;
+                    } else {
+                        for(Route route : routes){
+                            std::cout << "======================================" << std::endl;
+                            std::cout << "Origem: " << route.getOriginCity() << std::endl;
+                            std::cout << "Destino: " << route.getDestinationCity() << std::endl;
+                            std::cout << "Distância: " << route.getDistance() << " km" << std::endl;
+                            std::cout << "======================================" << std::endl;
+                        }
+                    }
+                    
+                }
 
             default:
                 if(option != 0) {
