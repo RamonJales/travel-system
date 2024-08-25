@@ -401,7 +401,7 @@ bool advanceHours(sqlite3* db, double hours, CityGraph g) {
         if (needsRest) {
             // Verifica se o transporte precisa de descanso e se as horas avançadas permitem descanso
             double hoursToRest = distanceBetweenRest / speed;
-            if (hoursToRest == hours) {
+            if (hoursToRest <= hours) {
                 totalTripHours += restTime;
                 std::cout << "O transporte entrou em descanso após percorrer " << distanceBetweenRest << " km." << std::endl;
             }
