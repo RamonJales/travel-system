@@ -355,21 +355,25 @@ int main() {
 
                             double routeDistance = route->getDistance();
                             double duration = routeDistance / possibleTransport->getSpeed();
+                            if (i + 1 < path.size() - 1) {
+                                 totalDuration += possibleTransport->getRestTime();
+                            }
                             totalDuration += duration;
 
                             tripId = addTripInTrips(db, transportName, start, end, totalDuration, passengers, false);
+
+                            if (tripId != -1) {
+                                bool updateTrip = updateTripInProgress(db, tripId, true);
+                                if (!updateTrip) {
+                                    std::cerr << "Erro ao atualizar a viagem de " << start << " para " << end << " para 'em andamento'." << std::endl;
+                                    break;
+                                }
+                            }
                         }
-                        std::cout << "A viagem levará um total de " << (totalDuration + possibleTransport->getRestTime()) << " horas." << std::endl;
+                        std::cout << "A viagem levará um total de " << totalDuration << " horas." << std::endl;
                     } else {
                         std::cout << "Não existe trajeto entre " << originCity << " e " << destinationCity << std::endl;
                         break;
-                    }
-
-                    if (tripId != -1) {
-                        bool updateTrip = updateTripInProgress(db, tripId, true);
-                        if (!updateTrip) {
-                            std::cerr << "Erro ao atualizar a viagem para 'em andamento'." << std::endl;
-                        }
                     }
 
                     possibleTransport->setTransportStatus(true, totalDuration);
@@ -378,8 +382,7 @@ int main() {
                     break;
                 }
 
-
-           case 6:
+            case 6:
                 {
                     double hoursToAdvance;
                     std::cout << "Digite a quantidade de horas para avançar: ";
