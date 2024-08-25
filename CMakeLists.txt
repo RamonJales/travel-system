@@ -21,7 +21,6 @@ set(Headers
     src/include/enums/TransportTypeEnum.hpp
     src/include/Transport.hpp
     src/include/Trip.hpp
-    src/include/Controller.hpp
     src/include/repositories/repositoryCity.hpp
     src/include/repositories/repositoryTransport.hpp
     src/include/repositories/repositoryPassenger.hpp
@@ -37,7 +36,6 @@ set(Sources
     src/impl/Route.cpp
     src/impl/Transport.cpp
     src/impl/Trip.cpp
-    src/impl/Controller.cpp
     src/impl/repositories/repositoryCity.cpp
     src/impl/repositories/repositoryTransport.cpp
     src/impl/repositories/repositoryPassenger.cpp

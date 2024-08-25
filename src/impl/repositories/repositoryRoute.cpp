@@ -136,16 +136,17 @@ Route* findRouteById(sqlite3* db, const int id) {
     return route;
 }
 
-bool deleteRouteByIdInRoutes(sqlite3* db, const int id) {
-    const char* sql_delete = "DELETE FROM routes WHERE id = ?;";
+bool deleteRouteByIdInRoutes(sqlite3* db, const std::string originCityName, const std::string destinationCityName) {
+    const char* sql_delete = "DELETE FROM routes WHERE originCity = ? AND destinationCity = ?;";
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(db, sql_delete, -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cerr << "Erro ao preparar o SQL: " << sqlite3_errmsg(db) << std::endl;
+        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
         return false;
     }
 
-    sqlite3_bind_int(stmt, 1, id);
+    sqlite3_bind_text(stmt, 1, originCityName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, destinationCityName.c_str(), -1, SQLITE_STATIC);
 
     int rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {

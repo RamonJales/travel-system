@@ -6,3 +6,7 @@ City::City() : cityName() {}
 std::string City::getCityName() const {
     return cityName;
 }
+
+void City::setCityName(std::string name) {
+    cityName = name;
+}

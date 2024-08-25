@@ -9,7 +9,8 @@ void createTableTrips(sqlite3* db) {
             destination_city_name TEXT NOT NULL,
             next_trip_id INTEGER,
             hours_in_route DOUBLE,
-            trip_in_progess INTEGER NOT NULL,
+            total_duration DOUBLE,
+            trip_in_progress INTEGER NOT NULL,
             FOREIGN KEY(transport_name) REFERENCES transports(name),
             FOREIGN KEY(origin_city_name) REFERENCES cities(name),
             FOREIGN KEY(destination_city_name) REFERENCES cities(name)
@@ -20,7 +21,7 @@ void createTableTrips(sqlite3* db) {
 
     // Create the trips table
     if (sqlite3_exec(db, sql_create, nullptr, 0, &errorMessage) != SQLITE_OK) {
-        std::cerr << "Erro ao criar a tabela transports: " << errorMessage << std::endl;
+        std::cerr << "Erro ao criar a tabela trips: " << errorMessage << std::endl;
         sqlite3_free(errorMessage);
     }
 
@@ -41,31 +42,32 @@ void createTableTrips(sqlite3* db) {
     }
 }
 
-bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double hoursInRoute, const std::list<Passenger*> passengers) {
-
+int addTripInTrips(sqlite3* db, const std::string& transportName, const std::string& originCityName, const std::string& destinationCityName, const double totalDuration, const std::list<Passenger*> passengers, const bool inProgress) {
     const char* sql_insert = R"(
-        INSERT INTO trips (transport_name, origin_city_name, destination_city_name, hours_in_route, trip_in_progess)
-        VALUES (?, ?, ?, ?, 0);
+        INSERT INTO trips (transport_name, origin_city_name, destination_city_name, hours_in_route, total_duration, trip_in_progress)
+        VALUES (?, ?, ?, 0, ?, ?);
     )";
 
     sqlite3_stmt* stmt;
     int rc = sqlite3_prepare_v2(db, sql_insert, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         std::cerr << "Erro ao preparar o SQL: " << sqlite3_errmsg(db) << std::endl;
-        return false;
+        return -1;
     }
+
 
     // Vincula os parâmetros ao comando SQL
     sqlite3_bind_text(stmt, 1, transportName.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, originCityName.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 3, destinationCityName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_double(stmt, 4, hoursInRoute);
+    sqlite3_bind_double(stmt, 4, totalDuration);
+    sqlite3_bind_int(stmt, 5, inProgress ? 1 : 0); // Define o valor de inProgress como 1 (verdadeiro) ou 0 (falso)
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
-        std::cerr << "Erro ao inserir o transporte: " << sqlite3_errmsg(db) << std::endl;
+        std::cerr << "Erro ao inserir a viagem: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
-        return false;
+        return -1;
     }
 
     // Captura o ID da linha recém-criada
@@ -73,11 +75,11 @@ bool addTripInTrips(sqlite3* db, const std::string& transportName, const std::st
 
     sqlite3_finalize(stmt);
     addPassengersInTripDB(db, tripId, passengers);
-    return true;
+    return tripId;
 }
 
 Trip* findTripById(sqlite3* db, int tripId) {
-    const char* sql_select = "SELECT transport_name, origin_city_name, destination_city_name, next_trip_id, hours_in_route, trip_in_progess FROM trips WHERE id = ?;";
+    const char* sql_select = "SELECT transport_name, origin_city_name, destination_city_name, next_trip_id, hours_in_route, trip_in_progress FROM trips WHERE id = ?;";
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -94,15 +96,42 @@ Trip* findTripById(sqlite3* db, int tripId) {
         std::string originCityName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
         std::string destinationCityName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
         int nextTripId = sqlite3_column_int(stmt, 3);
-        int hoursInRoute = sqlite3_column_int(stmt, 4);
-        bool tripInProgess = static_cast<bool>(sqlite3_column_int(stmt, 5));
+        double hoursInRoute = sqlite3_column_double(stmt, 4);
+        bool tripInProgress = static_cast<bool>(sqlite3_column_int(stmt, 5));
+
+        Transport* transport = findTransportByName(db, transportName);
+        City* originCity = findCityByName(db, originCityName);
+        City* destinationCity = findCityByName(db, destinationCityName);
+
+        if (transport == nullptr) {
+            std::cerr << "Erro: Transporte não encontrado para o nome " << transportName << std::endl;
+        }
+
+        if (originCity == nullptr) {
+            std::cerr << "Erro: Cidade de origem não encontrada para o nome " << originCityName << std::endl;
+        }
+
+        if (destinationCity == nullptr) {
+            std::cerr << "Erro: Cidade de destino não encontrada para o nome " << destinationCityName << std::endl;
+        }
+
+        if (transport == nullptr || originCity == nullptr || destinationCity == nullptr) {
+            std::cerr << "Erro: Ponteiros nulos encontrados em Trip ID " << tripId << "." << std::endl;
+            sqlite3_finalize(stmt);
+            return nullptr;
+        }
 
         std::list<Passenger*> passengers = findPassengersInTrip(db, tripId);
+        trip = new Trip(transport, passengers, originCity, destinationCity);
+        
+        Trip* nextTrip = findTripById(db, nextTripId);
+        if (nextTripId != 0 && nextTrip == nullptr) {
+            std::cerr << "Erro: Próxima viagem com ID " << nextTripId << " não encontrada para Trip ID " << tripId << "." << std::endl;
+        }
+        trip->setNextTrip(nextTrip);
 
-        trip = new Trip(findTransportByName(db, transportName), passengers, findCityByName(db, originCityName), findCityByName(db, destinationCityName));
-        trip->setNextTrip(findTripById(db, nextTripId));
         trip->setHoursInRoute(hoursInRoute);
-        trip->setTripInProgress(tripInProgess);
+        trip->setTripInProgress(tripInProgress);
         trip->setId(tripId);
     }
 
@@ -110,7 +139,8 @@ Trip* findTripById(sqlite3* db, int tripId) {
     return trip;
 }
 
-std::list<Passenger*> findPassengersInTrip(sqlite3* db, int tripId){
+
+std::list<Passenger*> findPassengersInTrip(sqlite3* db, int tripId) {
     std::list<Passenger*> passengers;
     const char* sql_select = "SELECT passenger_name FROM pivot_trips_passengers WHERE trip_id = ?;";
 
@@ -127,15 +157,15 @@ std::list<Passenger*> findPassengersInTrip(sqlite3* db, int tripId){
         std::string passengerName(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
 
         // Cria o objeto Passenger e adiciona à lista
-        passengers.emplace_back(findPassengerByName(db, passengerName));
+        Passenger* passenger = findPassengerByName(db, passengerName);
+        passengers.emplace_back(passenger);
     }
 
     sqlite3_finalize(stmt);
     return passengers;
-
 }
 
-bool addPassengersInTripDB (sqlite3* db, const int tripId, const std::list<Passenger*> passengers){
+bool addPassengersInTripDB(sqlite3* db, const int tripId, const std::list<Passenger*> passengers) {
     for (Passenger* passenger : passengers) {
         const char* sql_insert = R"(
             INSERT INTO pivot_trips_passengers (trip_id, passenger_name)
@@ -150,8 +180,9 @@ bool addPassengersInTripDB (sqlite3* db, const int tripId, const std::list<Passe
         }
 
         // Vincula os parâmetros ao comando SQL
+        const std::string passengerName = passenger->getName();
         sqlite3_bind_int(stmt, 1, tripId);
-        sqlite3_bind_text(stmt, 2, passenger->getName().c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, passengerName.c_str(), -1, SQLITE_STATIC);
 
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_DONE) {
@@ -166,12 +197,11 @@ bool addPassengersInTripDB (sqlite3* db, const int tripId, const std::list<Passe
 }
 
 bool removeTripInTrips(sqlite3* db, const int tripId) {
-
     Trip* trip = findTripById(db, tripId);
     if (trip == nullptr) {
         std::cout << "A viagem informada não existe." << std::endl;
         return false;
-    } 
+    }
     delete trip;
 
     const char* sql_remove = R"(
@@ -209,7 +239,7 @@ bool removeTripInTrips(sqlite3* db, const int tripId) {
         return false;
     }
     if (sqlite3_step(stmt_pivot) != SQLITE_DONE) {
-        std::cerr << "Erro ao remover a viagem: " << sqlite3_errmsg(db) << std::endl;
+        std::cerr << "Erro ao remover passageiros da viagem: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt_pivot);
         return false;
     }
@@ -219,38 +249,28 @@ bool removeTripInTrips(sqlite3* db, const int tripId) {
     return true;
 }
 
-bool editTripInTrips(sqlite3* db, const int tripId, const Trip* newTrip) {
-
-    // Tem que adicionar a verificação de se existe trip com esse id na main 
-    //     antes de perguntar o resto das informações e chamar essa função
-
-    const char* sql_edit = R"(
-        UPDATE trips 
-        SET transport_name = ?, origin_city_name = ?, destination_city_name = ?, next_trip_id = ?, hours_in_route = ?, trip_in_progess = ?
+bool editTripInTrips(sqlite3* db, Trip* trip) {
+    const char* sql = R"(
+        UPDATE trips
+        SET origin_city_name = ?, destination_city_name = ?, transport_name = ?, hours_in_route = ?, trip_in_progress = ?
         WHERE id = ?;
     )";
 
-    sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql_edit, -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cerr << "Erro ao preparar o SQL de edição: " << sqlite3_errmsg(db) << std::endl;
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar SQL: " << sqlite3_errmsg(db) << std::endl;
         return false;
     }
 
-    if (sqlite3_bind_text(stmt, 1, newTrip->getTransport()->getTransportName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 2, newTrip->getOrigin()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 3, newTrip->getDestination()->getCityName().c_str(), -1, SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 4, newTrip->getNextTrip()->getId()) != SQLITE_OK ||
-        sqlite3_bind_double(stmt, 5, newTrip->getHoursInRoute()) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 6, newTrip->getTripInProgress()) != SQLITE_OK ||
-        sqlite3_bind_int(stmt, 7, tripId) != SQLITE_OK) {
-
-        std::cerr << "Erro ao vincular os parâmetros: " << sqlite3_errmsg(db) << std::endl;
-        sqlite3_finalize(stmt);
-        return false;
-    }
+    sqlite3_bind_text(stmt, 1, trip->getOrigin()->getCityName().c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, trip->getDestination()->getCityName().c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, trip->getTransport()->getTransportName().c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, 4, trip->getHoursInRoute());
+    sqlite3_bind_int(stmt, 5, trip->isTripInProgress() ? 1 : 0); // Define o valor de trip_in_progress como 1 (verdadeiro) ou 0 (falso)
+    sqlite3_bind_int(stmt, 6, trip->getId());
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        std::cerr << "Erro ao alterar o transporte: " << sqlite3_errmsg(db) << std::endl;
+        std::cerr << "Erro ao atualizar a viagem: " << sqlite3_errmsg(db) << std::endl;
         sqlite3_finalize(stmt);
         return false;
     }
@@ -259,26 +279,208 @@ bool editTripInTrips(sqlite3* db, const int tripId, const Trip* newTrip) {
     return true;
 }
 
-bool listTripInTrips(sqlite3* db, std::list<Trip*>& trips) {
-    const char* sql_select = "SELECT id FROM trips;";
+bool updateTripInProgress(sqlite3* db, int tripId, bool inProgress) {
+    const char* sql_update = R"(
+        UPDATE trips
+        SET trip_in_progress = ?
+        WHERE id = ?;
+    )";
 
     sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(db, sql_select, -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
+    if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar SQL: " << sqlite3_errmsg(db) << std::endl;
         return false;
     }
 
-    trips.clear();
+    sqlite3_bind_int(stmt, 1, inProgress ? 1 : 0); // Define o valor de trip_in_progress como 1 (verdadeiro) ou 0 (falso)
+    sqlite3_bind_int(stmt, 2, tripId);
 
-    // Para cada linha retornada, os dados da viagem são recuperados e um objeto Trip é criado e adicionado à lista de viagens.
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int tripId = sqlite3_column_int(stmt, 0);
-        Trip* trip = findTripById(db, tripId);
-
-        // Cria o objeto Trip e adiciona à lista
-        trips.push_back(trip);
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        std::cerr << "Erro ao atualizar o status da viagem: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return false;
     }
 
     sqlite3_finalize(stmt);
+    return true;
+}
+
+std::list<Trip*> listTripInTrips(sqlite3* db) {
+    std::list<Trip*> trips;
+
+    const char* sql_select_all = "SELECT id FROM trips;";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql_select_all, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
+        return trips;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int tripId = sqlite3_column_int(stmt, 0);
+        Trip* trip = findTripById(db, tripId);
+        if (trip) {
+            trips.push_back(trip);
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return trips;
+}
+
+std::list<Trip*> listTripsInProgress(sqlite3* db) {
+    std::list<Trip*> trips;
+
+    const char* sql_select_in_progress = "SELECT id FROM trips WHERE trip_in_progress = 1;";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql_select_in_progress, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erro ao preparar consulta: " << sqlite3_errmsg(db) << std::endl;
+        return trips;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int tripId = sqlite3_column_int(stmt, 0);
+        Trip* trip = findTripById(db, tripId);
+        if (trip != nullptr) {
+            trips.push_back(trip);
+        } else {
+            std::cerr << "Erro: Viagem com ID " << tripId << " não foi adicionada à lista por conter ponteiros nulos." << std::endl;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return trips;
+}
+
+bool advanceHours(sqlite3* db, double hours, CityGraph g) {
+    std::list<Trip*> tripsInProgress = listTripsInProgress(db);
+
+    if (tripsInProgress.empty()) {
+        std::cout << "Não há viagens em andamento." << std::endl;
+        return true;
+    }
+
+    for (Trip* trip : tripsInProgress) {
+        if (trip == nullptr) {
+            std::cerr << "Erro: Ponteiro nulo encontrado na lista de viagens em andamento." << std::endl;
+            continue;
+        }
+
+        Transport* transport = findTransportByName(db, trip->getTransport()->getTransportName());
+        double restTime = transport->getRestTime(); 
+        double distanceBetweenRest = transport->getDistanceBetweenRest();
+
+        std::string originCityName = trip->getOrigin()->getCityName();
+        std::string destinationCityName = trip->getDestination()->getCityName();
+
+        std::vector<std::string> path = g.CityGraph::findShortestPath(originCityName, destinationCityName);
+        double routeDistance = 0;
+        if (!path.empty()) {
+            for (size_t i = 0; i < path.size() - 1; i++) {
+                std::string start = path[i];
+                std::string end = path[i + 1];
+                Route* route = findRouteByCities(db, start, end);
+                if (route == nullptr) {
+                    std::cout << "Erro no sistema! Não existe trajeto entre " << start << " e " << end << std::endl;
+                    break;
+                }
+                double pathDistance = route->getDistance();
+                routeDistance += pathDistance;
+            }
+        } else {
+            std::cout << "Não existe trajeto entre " << originCityName << " e " << destinationCityName << std::endl;
+            break;
+        }
+
+        double speed = transport->getSpeed();
+        double timeToCompleteTrip = routeDistance / speed;
+        bool needsRest = (routeDistance >= distanceBetweenRest);
+        double totalTripHours = timeToCompleteTrip;
+
+        if (needsRest) {
+            // Verifica se o transporte precisa de descanso e se as horas avançadas permitem descanso
+            double hoursToRest = distanceBetweenRest / speed;
+            if (hoursToRest == hours) {
+                totalTripHours += restTime;
+                std::cout << "O transporte entrou em descanso após percorrer " << distanceBetweenRest << " km." << std::endl;
+            }
+        }
+
+        double newHoursInRoute = trip->getHoursInRoute() + hours;
+
+        if (newHoursInRoute >= totalTripHours) { // Alterado para maior ou igual
+            newHoursInRoute = totalTripHours;
+            trip->setTripInProgress(false);
+            std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
+                      << " para " << trip->getDestination()->getCityName() 
+                      << " finalizada." << std::endl;
+            
+            City* cityDestination = trip->getDestination();
+            transport->setCurrentPlace(cityDestination);
+            transport->setTransportStatus(false, 0);
+            
+            editTransportInTransports(db, *transport);
+
+            std::list<Passenger *> passengers = findPassengersInTrip(db, trip->getId());
+            for(Passenger* passenger : passengers){
+                passenger->setCurrentLocation(*cityDestination);
+                editPassengerInPassengers(db, *passenger);
+            }
+
+            incrementCityVisit(db, destinationCityName);
+            delete cityDestination;
+        } else {
+            std::cout << "Viagem de " << trip->getOrigin()->getCityName() 
+                      << " para " << trip->getDestination()->getCityName() 
+                      << " em andamento." << std::endl;
+            
+            City* InTrip = new City();
+            InTrip->setCityName("em viagem");
+            transport->setHoursRemaining(totalTripHours - newHoursInRoute);
+            transport->setTransportStatus(true, totalTripHours - newHoursInRoute);
+            transport->setCurrentPlace(InTrip);
+            editTransportInTransports(db, *transport);
+            std::list<Passenger *> passengers = findPassengersInTrip(db, trip->getId());
+            for(Passenger* passenger : passengers){
+                passenger->setCurrentLocation(*InTrip);
+                editPassengerInPassengers(db, *passenger);
+            }
+        }
+
+        trip->setHoursInRoute(newHoursInRoute);
+
+        const char* sql_update = R"(
+            UPDATE trips
+            SET hours_in_route = ?, trip_in_progress = ?
+            WHERE id = ?;
+        )";
+
+        sqlite3_stmt* stmt;
+        if (sqlite3_prepare_v2(db, sql_update, -1, &stmt, nullptr) != SQLITE_OK) {
+            std::cerr << "Erro ao preparar SQL: " << sqlite3_errmsg(db) << std::endl;
+            return false;
+        }
+
+        int tripProgress = trip->isTripInProgress() ? 1 : 0;
+        int tripId = trip->getId();
+
+        sqlite3_bind_double(stmt, 1, newHoursInRoute);
+        sqlite3_bind_int(stmt, 2, tripProgress);
+        sqlite3_bind_int(stmt, 3, tripId);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
+            std::cerr << "Erro ao atualizar a viagem: " << sqlite3_errmsg(db) << std::endl;
+            sqlite3_finalize(stmt);
+            return false;
+        }
+
+        sqlite3_finalize(stmt);
+    }
+
+    for (Trip* trip : tripsInProgress) {
+        delete trip;
+    }
+
     return true;
 }
